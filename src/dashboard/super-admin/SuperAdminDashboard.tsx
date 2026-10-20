@@ -4,6 +4,7 @@ import api from "../../lib/client/axios";
 import type { AuthUser } from "../../auth/types";
 import type { ApiEnvelope, CafeConfig, CafeRevenue, Kiosk, RevenueRecap } from "../types";
 import CafeManagementDashboard from "./CafeManagementDashboard";
+import CafeAdminManagementDashboard from "./CafeAdminManagementDashboard";
 
 const money = (amount: number) =>
   new Intl.NumberFormat("id-ID", {
@@ -34,7 +35,7 @@ export default function SuperAdminDashboard({ user, onLogout }: SuperAdminDashbo
   const [search, setSearch] = useState("");
 
   const [isMobileNavOpen, setIsMobileNavOpen] = useState(false);
-  const [showCafeManagement, setShowCafeManagement] = useState(false);
+  const [dashboardView, setDashboardView] = useState<"revenue" | "cafes" | "cafe-admins">("revenue");
 
   // Initial load for revenue recap, cafes revenue, kiosks, and cafe configs
   useEffect(() => {
@@ -161,11 +162,11 @@ export default function SuperAdminDashboard({ user, onLogout }: SuperAdminDashbo
           <nav className="flex flex-col gap-1.5 pt-2">
             <a
               className={`flex items-center gap-3 px-4 py-3 rounded-xl font-medium transition-all ${
-                showCafeManagement ? "text-[#fff7ff] hover:bg-white/10" : "bg-[#FF6B35] text-white shadow-sm"
+                dashboardView === "revenue" ? "bg-[#FF6B35] text-white shadow-sm" : "text-[#fff7ff] hover:bg-white/10"
               }`}
               href="#revenue"
               onClick={() => {
-                setShowCafeManagement(false);
+                setDashboardView("revenue");
                 setIsMobileNavOpen(false);
               }}
             >
@@ -175,15 +176,28 @@ export default function SuperAdminDashboard({ user, onLogout }: SuperAdminDashbo
             <button
               type="button"
               className={`flex items-center gap-3 px-4 py-3 rounded-xl font-medium transition-all ${
-                showCafeManagement ? "bg-[#FF6B35] text-white shadow-sm" : "text-[#fff7ff] hover:bg-white/10"
+                dashboardView === "cafes" ? "bg-[#FF6B35] text-white shadow-sm" : "text-[#fff7ff] hover:bg-white/10"
               }`}
               onClick={() => {
-                setShowCafeManagement(true);
+                setDashboardView("cafes");
                 setIsMobileNavOpen(false);
               }}
             >
               <span className="material-symbols-outlined text-xl">storefront</span>
               <span className="text-sm">Kelola Kafe</span>
+            </button>
+            <button
+              type="button"
+              className={`flex items-center gap-3 px-4 py-3 rounded-xl font-medium transition-all ${
+                dashboardView === "cafe-admins" ? "bg-[#FF6B35] text-white shadow-sm" : "text-[#fff7ff] hover:bg-white/10"
+              }`}
+              onClick={() => {
+                setDashboardView("cafe-admins");
+                setIsMobileNavOpen(false);
+              }}
+            >
+              <span className="material-symbols-outlined text-xl">manage_accounts</span>
+              <span className="text-sm">Kelola Admin Kafe</span>
             </button>
           </nav>
         </div>
@@ -208,7 +222,7 @@ export default function SuperAdminDashboard({ user, onLogout }: SuperAdminDashbo
             <div className="hidden sm:flex items-center gap-2 text-xs text-[#594139]">
               <span className="font-semibold text-[#FF6B35]">Kenangin</span>
               <span className="material-symbols-outlined text-sm">chevron_right</span>
-              <span className="text-[#241435] font-medium">{showCafeManagement ? "Kelola Kafe" : "Ringkasan Finansial & Bagi Hasil"}</span>
+              <span className="text-[#241435] font-medium">{dashboardView === "cafes" ? "Kelola Kafe" : dashboardView === "cafe-admins" ? "Kelola Admin Kafe" : "Ringkasan Finansial & Bagi Hasil"}</span>
             </div>
           </div>
 
@@ -233,8 +247,10 @@ export default function SuperAdminDashboard({ user, onLogout }: SuperAdminDashbo
 
         {/* Main Content Area */}
         <main className="w-full pt-16 px-4 lg:px-8 bg-[#FFF7F2] min-h-screen">
-          {showCafeManagement ? (
+          {dashboardView === "cafes" ? (
             <CafeManagementDashboard />
+          ) : dashboardView === "cafe-admins" ? (
+            <CafeAdminManagementDashboard />
           ) : (
           <div className="flex flex-col w-full pb-16 pt-6">
             {/* Error Banner */}
