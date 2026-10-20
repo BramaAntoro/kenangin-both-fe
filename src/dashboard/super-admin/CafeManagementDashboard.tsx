@@ -20,6 +20,23 @@ type CafeAdmin = {
   email: string;
 };
 
+type CafePackage = {
+  id: string;
+  name: string;
+  price: number;
+  photoShotsCount: number;
+  printCopiesCount: number;
+  features: unknown;
+  description: string | null;
+  isActive: boolean | null;
+};
+
+type CafePackagesResult = {
+  id: string;
+  name: string;
+  packages: CafePackage[];
+};
+
 type CafeForm = {
   name: string;
   address: string;
@@ -68,6 +85,8 @@ export default function CafeManagementDashboard() {
   const [form, setForm] = useState<CafeForm>(emptyForm);
   const [editing, setEditing] = useState<Cafe | null>(null);
   const [isFormOpen, setIsFormOpen] = useState(false);
+  const [viewingPackages, setViewingPackages] = useState<CafePackagesResult | null>(null);
+  const [loadingPackages, setLoadingPackages] = useState(false);
 
   async function loadData(signal?: AbortSignal) {
     const cafesResponse = await api.get<ApiEnvelope<{ cafes: Record<string, Cafe> }>>("/cafes", { signal });
@@ -185,6 +204,21 @@ export default function CafeManagementDashboard() {
     }
   }
 
+  async function viewCafePackages(cafe: Cafe) {
+    setViewingPackages({ id: cafe.id, name: cafe.name, packages: [] });
+    setLoadingPackages(true);
+    setError("");
+    try {
+      const response = await api.get<ApiEnvelope<{ cafe: CafePackagesResult }>>(`/cafes/packages/${cafe.id}`);
+      setViewingPackages(response.data.data.cafe);
+    } catch (requestError: unknown) {
+      setViewingPackages(null);
+      setError(isAxiosError<{ message?: string }>(requestError) ? requestError.response?.data?.message ?? "Gagal memuat paket kafe." : "Gagal memuat paket kafe.");
+    } finally {
+      setLoadingPackages(false);
+    }
+  }
+
   return (
     <div className="flex flex-col w-full pb-16 pt-6">
       <header className="mb-6">
@@ -226,8 +260,10 @@ export default function CafeManagementDashboard() {
             </div>
           )}
 
-          {loading ? <p className="p-8 text-center text-sm text-[#594139]">Memuat data kafe…</p> : <div className="overflow-x-auto"><table className="w-full min-w-225 text-left text-sm"><thead className="bg-[#FFF7F2] text-xs uppercase tracking-wider text-[#594139]"><tr><th className="px-6 py-4">Kafe</th><th className="px-4 py-4">Kontak</th><th className="px-4 py-4">Admin</th><th className="px-4 py-4 text-center">Bagi Hasil</th><th className="px-6 py-4 text-right">Aksi</th></tr></thead><tbody className="divide-y divide-[#E9E1E6]">{cafes.map((cafe) => <tr key={cafe.id}><td className="px-6 py-4"><p className="font-semibold">{cafe.name}</p><p className="mt-1 text-xs text-[#594139]">{cafe.address}</p></td><td className="px-4 py-4">{cafe.phone}</td><td className="px-4 py-4">{cafe.cafeAdmin}</td><td className="px-4 py-4 text-center"><span className="rounded-full bg-[#FFF7F2] px-2.5 py-1 text-xs font-semibold text-[#795900]">{cafe.cafeSharePercent}% Kafe</span><span className="mx-1 text-[#594139]">/</span><span className="rounded-full bg-[#ffdbd0] px-2.5 py-1 text-xs font-semibold text-[#ab3500]">{cafe.kenanginSharePercent}% Kenangin</span></td><td className="px-6 py-4 text-right"><button type="button" onClick={() => openEdit(cafe)} className="mr-3 text-sm font-semibold text-[#FF6B35] hover:underline">Ubah</button><button type="button" onClick={() => void deleteCafe(cafe)} className="text-sm font-semibold text-[#D32F2F] hover:underline">Hapus</button></td></tr>)}{cafes.length === 0 && <tr><td colSpan={5} className="px-6 py-10 text-center text-[#594139]">Belum ada data kafe.</td></tr>}</tbody></table></div>}
+          {loading ? <p className="p-8 text-center text-sm text-[#594139]">Memuat data kafe…</p> : <div className="overflow-x-auto"><table className="w-full min-w-225 text-left text-sm"><thead className="bg-[#FFF7F2] text-xs uppercase tracking-wider text-[#594139]"><tr><th className="px-6 py-4">Kafe</th><th className="px-4 py-4">Kontak</th><th className="px-4 py-4">Admin</th><th className="px-4 py-4 text-center">Bagi Hasil</th><th className="px-6 py-4 text-right">Aksi</th></tr></thead><tbody className="divide-y divide-[#E9E1E6]">{cafes.map((cafe) => <tr key={cafe.id}><td className="px-6 py-4"><p className="font-semibold">{cafe.name}</p><p className="mt-1 text-xs text-[#594139]">{cafe.address}</p></td><td className="px-4 py-4">{cafe.phone}</td><td className="px-4 py-4">{cafe.cafeAdmin}</td><td className="px-4 py-4 text-center"><span className="rounded-full bg-[#FFF7F2] px-2.5 py-1 text-xs font-semibold text-[#795900]">{cafe.cafeSharePercent}% Kafe</span><span className="mx-1 text-[#594139]">/</span><span className="rounded-full bg-[#ffdbd0] px-2.5 py-1 text-xs font-semibold text-[#ab3500]">{cafe.kenanginSharePercent}% Kenangin</span></td><td className="whitespace-nowrap px-6 py-4 text-right"><button type="button" onClick={() => void viewCafePackages(cafe)} className="mr-3 text-sm font-semibold text-[#594139] hover:underline">Lihat Paket</button><button type="button" onClick={() => openEdit(cafe)} className="mr-3 text-sm font-semibold text-[#FF6B35] hover:underline">Ubah</button><button type="button" onClick={() => void deleteCafe(cafe)} className="text-sm font-semibold text-[#D32F2F] hover:underline">Hapus</button></td></tr>)}{cafes.length === 0 && <tr><td colSpan={5} className="px-6 py-10 text-center text-[#594139]">Belum ada data kafe.</td></tr>}</tbody></table></div>}
         </section>
+
+        {viewingPackages && <div className="fixed inset-0 z-60 grid place-items-center bg-[#241435]/45 p-4" role="dialog" aria-modal="true" aria-labelledby="cafe-packages-title"><section className="max-h-[90vh] w-full max-w-3xl overflow-y-auto rounded-3xl border border-[#E9E1E6] bg-[#FFF7F2] p-5 shadow-xl sm:p-6"><div className="flex items-start justify-between gap-4"><div><p className="text-sm text-[#594139]">Paket booth kafe</p><h3 id="cafe-packages-title" className="mt-1 font-display text-xl font-semibold">{viewingPackages.name}</h3></div><button type="button" onClick={() => setViewingPackages(null)} className="rounded-xl p-2 text-[#594139] hover:bg-white" aria-label="Tutup paket"><span className="material-symbols-outlined">close</span></button></div>{loadingPackages ? <p className="py-10 text-center text-sm text-[#594139]">Memuat paket…</p> : viewingPackages.packages.length ? <div className="mt-5 grid gap-4 sm:grid-cols-2">{viewingPackages.packages.map((boothPackage) => <article key={boothPackage.id} className="rounded-2xl border border-[#E9E1E6] bg-white p-4"><div className="flex items-start justify-between gap-3"><div><h4 className="font-display text-lg font-semibold">{boothPackage.name}</h4><p className="mt-1 text-sm font-semibold text-[#FF6B35]">{new Intl.NumberFormat("id-ID", { style: "currency", currency: "IDR", maximumFractionDigits: 0 }).format(boothPackage.price)}</p></div><span className={`rounded-full px-2.5 py-1 text-xs font-semibold ${boothPackage.isActive !== false ? "bg-[#2E7D32]/10 text-[#2E7D32]" : "bg-[#ffdad6] text-[#D32F2F]"}`}>{boothPackage.isActive !== false ? "Aktif" : "Nonaktif"}</span></div><p className="mt-3 text-sm text-[#594139]">{boothPackage.photoShotsCount} jepretan · {boothPackage.printCopiesCount} cetakan</p>{boothPackage.description && <p className="mt-2 text-sm text-[#594139]">{boothPackage.description}</p>}{Array.isArray(boothPackage.features) && boothPackage.features.length > 0 && <ul className="mt-3 list-disc space-y-1 pl-5 text-sm text-[#594139]">{boothPackage.features.map((feature, index) => <li key={`${boothPackage.id}-${index}`}>{typeof feature === "string" ? feature : JSON.stringify(feature)}</li>)}</ul>}</article>)}</div> : <p className="py-10 text-center text-sm text-[#594139]">Kafe ini belum memiliki paket.</p>}<button type="button" onClick={() => setViewingPackages(null)} className="mt-5 rounded-xl border border-[#E9E1E6] bg-white px-4 py-2.5 text-sm font-semibold">Tutup</button></section></div>}
     </div>
   );
 }
