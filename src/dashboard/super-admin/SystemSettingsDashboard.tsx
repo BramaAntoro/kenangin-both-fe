@@ -8,6 +8,8 @@ type SystemSetting = {
   settingKey: string;
   settingValue: string;
   description?: string | null;
+  updatedBy?: string | null;
+  updatedAt?: string | null;
 };
 
 type SettingForm = {
@@ -27,6 +29,7 @@ export default function SystemSettingsDashboard() {
   const [error, setError] = useState("");
   const [form, setForm] = useState<SettingForm>(emptyForm);
   const [editing, setEditing] = useState<SystemSetting | null>(null);
+  const [detail, setDetail] = useState<SystemSetting | null>(null);
   const [isFormOpen, setIsFormOpen] = useState(false);
 
   async function loadSettings(signal?: AbortSignal) {
@@ -63,16 +66,29 @@ export default function SystemSettingsDashboard() {
     setIsFormOpen(true);
   }
 
+  async function getDetail(setting: SystemSetting) {
+    const response = await api.get<ApiEnvelope<{ systemSetting: SystemSetting }>>(`/system-settings/${setting.id}`);
+    return response.data.data.systemSetting;
+  }
+
+  async function openDetail(setting: SystemSetting) {
+    setError("");
+    try {
+      setDetail(await getDetail(setting));
+    } catch (requestError: unknown) {
+      setError(isAxiosError<ApiErrorResponse>(requestError) ? requestError.response?.data?.message ?? "Gagal memuat detail pengaturan." : "Gagal memuat detail pengaturan.");
+    }
+  }
+
   async function openEdit(setting: SystemSetting) {
     setError("");
     try {
-      const response = await api.get<ApiEnvelope<{ systemSetting: SystemSetting }>>(`/system-settings/${setting.id}`);
-      const detail = response.data.data.systemSetting;
-      setEditing(detail);
+      const settingDetail = await getDetail(setting);
+      setEditing(settingDetail);
       setForm({
-        settingKey: detail.settingKey,
-        settingValue: detail.settingValue,
-        description: detail.description ?? "",
+        settingKey: settingDetail.settingKey,
+        settingValue: settingDetail.settingValue,
+        description: settingDetail.description ?? "",
       });
       setIsFormOpen(true);
     } catch (requestError: unknown) {
@@ -136,8 +152,10 @@ export default function SystemSettingsDashboard() {
           </button>
         </div>
 
-        {loading ? <p className="p-8 text-center text-sm text-[#594139]">Memuat pengaturan sistem…</p> : <div className="overflow-x-auto"><table className="w-full min-w-160 text-left text-sm"><thead className="bg-[#FFF7F2] text-xs uppercase tracking-wider text-[#594139]"><tr><th className="px-6 py-4">Key</th><th className="px-4 py-4">Value</th><th className="px-6 py-4 text-right">Aksi</th></tr></thead><tbody className="divide-y divide-[#E9E1E6]">{settings.map((setting) => <tr key={setting.id}><td className="px-6 py-4 font-mono text-xs font-semibold text-[#241435]">{setting.settingKey}</td><td className="px-4 py-4 break-all text-[#594139]">{setting.settingValue}</td><td className="whitespace-nowrap px-6 py-4 text-right"><button type="button" onClick={() => void openEdit(setting)} className="mr-3 text-sm font-semibold text-[#FF6B35] hover:underline">Ubah</button><button type="button" onClick={() => void deleteSetting(setting)} className="text-sm font-semibold text-[#D32F2F] hover:underline">Hapus</button></td></tr>)}{settings.length === 0 && <tr><td colSpan={3} className="px-6 py-10 text-center text-[#594139]">Belum ada pengaturan sistem.</td></tr>}</tbody></table></div>}
+        {loading ? <p className="p-8 text-center text-sm text-[#594139]">Memuat pengaturan sistem…</p> : <div className="overflow-x-auto"><table className="w-full min-w-160 text-left text-sm"><thead className="bg-[#FFF7F2] text-xs uppercase tracking-wider text-[#594139]"><tr><th className="px-6 py-4">Key</th><th className="px-4 py-4">Value</th><th className="px-6 py-4 text-right">Aksi</th></tr></thead><tbody className="divide-y divide-[#E9E1E6]">{settings.map((setting) => <tr key={setting.id}><td className="px-6 py-4 font-mono text-xs font-semibold text-[#241435]">{setting.settingKey}</td><td className="px-4 py-4 break-all text-[#594139]">{setting.settingValue}</td><td className="whitespace-nowrap px-6 py-4 text-right"><button type="button" onClick={() => void openDetail(setting)} className="mr-3 text-sm font-semibold text-[#594139] hover:underline">Detail</button><button type="button" onClick={() => void openEdit(setting)} className="mr-3 text-sm font-semibold text-[#FF6B35] hover:underline">Ubah</button><button type="button" onClick={() => void deleteSetting(setting)} className="text-sm font-semibold text-[#D32F2F] hover:underline">Hapus</button></td></tr>)}{settings.length === 0 && <tr><td colSpan={3} className="px-6 py-10 text-center text-[#594139]">Belum ada pengaturan sistem.</td></tr>}</tbody></table></div>}
       </section>
+
+      {detail && <div className="fixed inset-0 z-60 grid place-items-center bg-[#241435]/45 p-4" role="dialog" aria-modal="true" aria-labelledby="system-setting-detail-title"><section className="w-full max-w-xl rounded-3xl border border-[#E9E1E6] bg-[#FFF7F2] p-5 shadow-xl sm:p-6"><div className="flex items-start justify-between gap-4"><div><p className="text-sm text-[#594139]">Detail Pengaturan</p><h3 id="system-setting-detail-title" className="mt-1 font-display text-xl font-semibold">{detail.settingKey}</h3></div><button type="button" onClick={() => setDetail(null)} className="rounded-xl p-2 text-[#594139] hover:bg-white" aria-label="Tutup detail"><span className="material-symbols-outlined">close</span></button></div><dl className="mt-5 grid gap-4 text-sm"><div><dt className="font-semibold text-[#594139]">Value</dt><dd className="mt-1 break-all rounded-xl border border-[#E9E1E6] bg-white p-3 text-[#241435]">{detail.settingValue}</dd></div><div><dt className="font-semibold text-[#594139]">Deskripsi</dt><dd className="mt-1 text-[#241435]">{detail.description || "Tidak ada deskripsi."}</dd></div><div className="grid gap-4 sm:grid-cols-2"><div><dt className="font-semibold text-[#594139]">ID</dt><dd className="mt-1 break-all font-mono text-xs text-[#241435]">{detail.id}</dd></div><div><dt className="font-semibold text-[#594139]">Terakhir diperbarui</dt><dd className="mt-1 text-[#241435]">{detail.updatedAt ? new Intl.DateTimeFormat("id-ID", { dateStyle: "medium", timeStyle: "short" }).format(new Date(detail.updatedAt)) : "-"}</dd></div></div></dl><button type="button" onClick={() => setDetail(null)} className="mt-6 rounded-xl border border-[#E9E1E6] bg-white px-4 py-2.5 text-sm font-semibold">Tutup</button></section></div>}
 
       {isFormOpen && <div className="fixed inset-0 z-60 grid place-items-center bg-[#241435]/45 p-4" role="dialog" aria-modal="true" aria-labelledby="system-setting-form-title"><form onSubmit={saveSetting} className="grid w-full max-w-xl gap-4 rounded-3xl border border-[#E9E1E6] bg-[#FFF7F2] p-5 shadow-xl sm:p-6"><h3 id="system-setting-form-title" className="font-display text-lg font-semibold">{editing ? `Ubah ${editing.settingKey}` : "Pengaturan Baru"}</h3><label className="text-sm font-medium">Setting Key<input required maxLength={100} pattern="[a-z][a-z0-9_]*" title="Gunakan huruf kecil, angka, dan underscore; harus diawali huruf kecil." value={form.settingKey} onChange={(event) => setForm({ ...form, settingKey: event.target.value })} className="mt-1.5 w-full rounded-xl border border-[#E9E1E6] bg-white px-3 py-2 font-mono text-sm outline-none focus:border-[#FF6B35]" /></label><label className="text-sm font-medium">Setting Value<input required value={form.settingValue} onChange={(event) => setForm({ ...form, settingValue: event.target.value })} className="mt-1.5 w-full rounded-xl border border-[#E9E1E6] bg-white px-3 py-2 text-sm outline-none focus:border-[#FF6B35]" /></label><label className="text-sm font-medium">Deskripsi <span className="font-normal text-[#594139]">(opsional)</span><textarea maxLength={500} value={form.description} onChange={(event) => setForm({ ...form, description: event.target.value })} className="mt-1.5 min-h-24 w-full rounded-xl border border-[#E9E1E6] bg-white px-3 py-2 text-sm outline-none focus:border-[#FF6B35]" /></label><div className="flex gap-3"><button disabled={saving} type="submit" className="rounded-xl bg-[#FF6B35] px-4 py-2.5 text-sm font-semibold text-white disabled:opacity-50">{saving ? "Menyimpan…" : "Simpan"}</button><button disabled={saving} type="button" onClick={closeForm} className="rounded-xl border border-[#E9E1E6] bg-white px-4 py-2.5 text-sm font-semibold">Batal</button></div></form></div>}
     </div>
