@@ -6,6 +6,7 @@ import type { ApiEnvelope, CafeConfig, CafeRevenue, Kiosk, RevenueRecap } from "
 import CafeManagementDashboard from "./CafeManagementDashboard";
 import CafeAdminManagementDashboard from "./CafeAdminManagementDashboard";
 import KioskManagementDashboard from "./KioskManagementDashboard";
+import SystemSettingsDashboard from "./SystemSettingsDashboard";
 
 const money = (amount: number) =>
   new Intl.NumberFormat("id-ID", {
@@ -36,7 +37,7 @@ export default function SuperAdminDashboard({ user, onLogout }: SuperAdminDashbo
   const [search, setSearch] = useState("");
 
   const [isMobileNavOpen, setIsMobileNavOpen] = useState(false);
-  const [dashboardView, setDashboardView] = useState<"revenue" | "cafes" | "cafe-admins" | "kiosks">("revenue");
+  const [dashboardView, setDashboardView] = useState<"revenue" | "cafes" | "cafe-admins" | "kiosks" | "system-settings">("revenue");
 
   // Initial load for revenue recap, cafes revenue, kiosks, and cafe configs
   useEffect(() => {
@@ -213,6 +214,19 @@ export default function SuperAdminDashboard({ user, onLogout }: SuperAdminDashbo
               <span className="material-symbols-outlined text-xl">photo_camera</span>
               <span className="text-sm">Kelola Kiosk</span>
             </button>
+            <button
+              type="button"
+              className={`flex items-center gap-3 px-4 py-3 rounded-xl font-medium transition-all ${
+                dashboardView === "system-settings" ? "bg-[#FF6B35] text-white shadow-sm" : "text-[#fff7ff] hover:bg-white/10"
+              }`}
+              onClick={() => {
+                setDashboardView("system-settings");
+                setIsMobileNavOpen(false);
+              }}
+            >
+              <span className="material-symbols-outlined text-xl">settings</span>
+              <span className="text-sm">Pengaturan Sistem</span>
+            </button>
           </nav>
         </div>
       </aside>
@@ -236,7 +250,7 @@ export default function SuperAdminDashboard({ user, onLogout }: SuperAdminDashbo
             <div className="hidden sm:flex items-center gap-2 text-xs text-[#594139]">
               <span className="font-semibold text-[#FF6B35]">Kenangin</span>
               <span className="material-symbols-outlined text-sm">chevron_right</span>
-              <span className="text-[#241435] font-medium">{dashboardView === "cafes" ? "Kelola Kafe" : dashboardView === "cafe-admins" ? "Kelola Admin Kafe" : dashboardView === "kiosks" ? "Kelola Kiosk" : "Ringkasan Finansial & Bagi Hasil"}</span>
+              <span className="text-[#241435] font-medium">{dashboardView === "cafes" ? "Kelola Kafe" : dashboardView === "cafe-admins" ? "Kelola Admin Kafe" : dashboardView === "kiosks" ? "Kelola Kiosk" : dashboardView === "system-settings" ? "Pengaturan Sistem" : "Ringkasan Finansial & Bagi Hasil"}</span>
             </div>
           </div>
 
@@ -267,6 +281,8 @@ export default function SuperAdminDashboard({ user, onLogout }: SuperAdminDashbo
             <CafeAdminManagementDashboard />
           ) : dashboardView === "kiosks" ? (
             <KioskManagementDashboard />
+          ) : dashboardView === "system-settings" ? (
+            <SystemSettingsDashboard />
           ) : (
           <div className="flex flex-col w-full pb-16 pt-6">
             {/* Error Banner */}
