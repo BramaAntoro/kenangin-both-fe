@@ -1,15 +1,11 @@
 import { useState, type FormEvent } from "react";
 import { isAxiosError } from "axios";
-import { Link, useNavigate } from "react-router";
+import { useNavigate } from "react-router";
 import api from "../../lib/client/axios";
 
-type AuthMode = "login" | "register";
-
-export default function AuthForm({ mode }: { mode: AuthMode }) {
+export default function AuthForm() {
   const navigate = useNavigate();
-  const isRegister = mode === "register";
   const [email, setEmail] = useState("");
-  const [name, setName] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
@@ -21,10 +17,7 @@ export default function AuthForm({ mode }: { mode: AuthMode }) {
     setLoading(true);
 
     try {
-      await api.post(
-        `/auth/${mode}`,
-        isRegister ? { email, name, password } : { email, password },
-      );
+      await api.post("/auth/login", { email, password });
       navigate("/dashboard", { replace: true });
     } catch (error) {
       if (isAxiosError<{ message: string }>(error)) {
@@ -45,12 +38,10 @@ export default function AuthForm({ mode }: { mode: AuthMode }) {
     >
       <div className="mb-7">
         <h2 className="font-display text-2xl font-semibold text-[#241435]">
-          {isRegister ? "Buat akun baru" : "Senang bertemu lagi!"}
+          Senang bertemu lagi!
         </h2>
         <p className="mt-2 text-sm leading-6 text-[#241435]/65">
-          {isRegister
-            ? "Mulai kumpulkan semua momen dari semua sudut."
-            : "Masuk dan lanjutkan menyimpan momen berharga."}
+          Masuk dan lanjutkan menyimpan momen berharga.
         </p>
       </div>
 
@@ -63,28 +54,6 @@ export default function AuthForm({ mode }: { mode: AuthMode }) {
         </p>
       )}
       <div className="space-y-5">
-        {isRegister && (
-          <div>
-            <label
-              htmlFor="name"
-              className="mb-2 block text-sm font-medium text-[#241435]"
-            >
-              Nama
-            </label>
-            <input
-              id="name"
-              name="name"
-              autoComplete="name"
-              value={name}
-              onChange={(event) => setName(event.target.value)}
-              placeholder="Nama lengkap"
-              required
-              minLength={1}
-              maxLength={50}
-              className={inputClass}
-            />
-          </div>
-        )}
         <div>
           <label
             htmlFor="email"
@@ -116,7 +85,7 @@ export default function AuthForm({ mode }: { mode: AuthMode }) {
             id="password"
             name="password"
             type="password"
-            autoComplete={isRegister ? "new-password" : "current-password"}
+            autoComplete="current-password"
             value={password}
             onChange={(event) => setPassword(event.target.value)}
             placeholder="Minimal 8 karakter"
@@ -131,19 +100,9 @@ export default function AuthForm({ mode }: { mode: AuthMode }) {
           disabled={loading}
           className="w-full rounded-xl bg-[#FF6B35] px-4 py-3.5 text-sm font-semibold text-white transition hover:bg-[#E85A2A] focus:outline-none focus:ring-2 focus:ring-[#FF6B35] focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-60"
         >
-          {loading ? "Sebentar…" : isRegister ? "Buat akun" : "Masuk"}
+          {loading ? "Sebentar…" : "Masuk"}
         </button>
       </div>
-
-      <p className="mt-6 text-center text-sm text-[#241435]/70">
-        {isRegister ? "Sudah punya akun?" : "Belum punya akun?"}{" "}
-        <Link
-          to={isRegister ? "/login" : "/register"}
-          className="font-semibold text-[#FF6B35] hover:text-[#E85A2A]"
-        >
-          {isRegister ? "Masuk" : "Daftar"}
-        </Link>
-      </p>
     </form>
   );
 }

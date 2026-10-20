@@ -1,11 +1,7 @@
 import { Link } from "react-router";
 import AuthForm from "../auth/components/AuthForm";
 
-type AuthPageProps = {
-  mode: "login" | "register";
-};
-
-export default function AuthPage({ mode }: AuthPageProps) {
+export default function AuthPage() {
   return (
     <main className="min-h-screen overflow-hidden bg-[#FFF7F2] text-[#241435]">
       <div className="mx-auto grid min-h-screen max-w-6xl items-center gap-12 px-5 py-10 md:grid-cols-[1fr_440px] md:px-10">
@@ -38,7 +34,7 @@ export default function AuthPage({ mode }: AuthPageProps) {
           <Link to="/login" className="mb-8 inline-flex items-center gap-2 md:hidden">
             <img src="/lockups/lockup.webp" alt="Kenangin" className="w-44" />
           </Link>
-          <AuthForm mode={mode} />
+          <AuthForm />
           <p className="mt-6 text-center text-xs text-[#241435]/45">Dengan masuk, kamu ikut menjaga setiap kenangan tetap dekat.</p>
         </section>
       </div>
