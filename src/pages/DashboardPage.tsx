@@ -1,47 +1,18 @@
-import { useEffect, useState } from "react";
-import { isAxiosError } from "axios";
-import { useNavigate } from "react-router";
-import api from "../lib/client/axios";
-import type { AuthUser } from "../auth/types";
+import { useState } from "react";
+import { useAuth } from "../auth/AuthProvider";
 import SuperAdminDashboard from "../dashboard/super-admin/SuperAdminDashboard";
 import CafeAdminDashboard from "../dashboard/cafe-admin/CafeAdminDashboard";
 
 export default function DashboardPage() {
-  const [user, setUser] = useState<AuthUser | null>(null);
-  const [loading, setLoading] = useState(true);
+  const { user, logout: endSession } = useAuth();
   const [loggingOut, setLoggingOut] = useState(false);
-  const navigate = useNavigate();
-
-  useEffect(() => {
-    const controller = new AbortController();
-    api
-      .get<{ data: { user: AuthUser } }>("/auth/me", { signal: controller.signal })
-      .then((response) => {
-        setUser(response.data.data.user);
-      })
-      .catch((error: unknown) => {
-        if (!controller.signal.aborted && isAxiosError(error) && error.response?.status === 401) {
-          navigate("/login", { replace: true });
-        }
-      })
-      .finally(() => {
-        if (!controller.signal.aborted) setLoading(false);
-      });
-
-    return () => controller.abort();
-  }, [navigate]);
 
   async function handleLogout() {
     setLoggingOut(true);
-    try {
-      await api.post("/auth/logout");
-    } catch {
-      // Local navigation still ends the session view
-    }
-    navigate("/login", { replace: true });
+    await endSession();
   }
 
-  if (loading || loggingOut) {
+  if (loggingOut) {
     return (
       <main className="grid min-h-screen place-items-center bg-background-canvas text-body-md text-on-surface-variant">
         <div className="flex flex-col items-center gap-3">
