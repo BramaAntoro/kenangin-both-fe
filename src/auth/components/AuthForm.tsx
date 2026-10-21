@@ -2,9 +2,11 @@ import { useState, type FormEvent } from "react";
 import { isAxiosError } from "axios";
 import { useNavigate } from "react-router";
 import api from "../../lib/client/axios";
+import { useAuth } from "../AuthProvider";
 
 export default function AuthForm() {
   const navigate = useNavigate();
+  const { refreshSession } = useAuth();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
@@ -18,6 +20,7 @@ export default function AuthForm() {
 
     try {
       await api.post("/auth/login", { email, password });
+      await refreshSession();
       navigate("/dashboard", { replace: true });
     } catch (error) {
       if (isAxiosError<{ message: string }>(error)) {
