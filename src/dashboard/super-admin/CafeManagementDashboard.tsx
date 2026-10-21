@@ -99,35 +99,44 @@ export default function CafeManagementDashboard() {
   const [viewingCafeDetail, setViewingCafeDetail] =
     useState<CafePackagesResult | null>(null);
   const [loadingCafeDetail, setLoadingCafeDetail] = useState(false);
+  const [page, setPage] = useState(1);
+  const [search, setSearch] = useState("");
+  const [meta, setMeta] = useState({ currentPage: 1, totalPages: 0, totalItems: 0 });
+  const totalPages = Math.max(meta.totalPages, 1);
 
-  async function loadData(signal?: AbortSignal) {
+  async function loadData(pageValue = page, searchValue = search, signal?: AbortSignal) {
     const cafesResponse = await api.get<
       ApiEnvelope<{ cafes: Record<string, Cafe> }>
-    >("/cafes", { signal });
+    >("/cafes", { params: { page: pageValue, limit: 5, ...(searchValue ? { search: searchValue } : {}) }, signal });
 
     setCafes(Object.values(cafesResponse.data.data.cafes));
+    setMeta({
+      currentPage: cafesResponse.data.meta?.currentPage ?? pageValue,
+      totalPages: cafesResponse.data.meta?.totalPages ?? 0,
+      totalItems: cafesResponse.data.meta?.totalItems ?? 0,
+    });
   }
 
   useEffect(() => {
     const controller = new AbortController();
+    setLoading(true);
+    const timeout = window.setTimeout(() => {
+      loadData(page, search, controller.signal)
+        .catch((requestError: unknown) => {
+          if (!controller.signal.aborted && isAxiosError<{ message?: string }>(requestError)) {
+            setError(requestError.response?.data?.message ?? "Gagal memuat data kafe.");
+          }
+        })
+        .finally(() => {
+          if (!controller.signal.aborted) setLoading(false);
+        });
+    }, search ? 250 : 0);
 
-    loadData(controller.signal)
-      .catch((requestError: unknown) => {
-        if (
-          !controller.signal.aborted &&
-          isAxiosError<{ message?: string }>(requestError)
-        ) {
-          setError(
-            requestError.response?.data?.message ?? "Gagal memuat data kafe.",
-          );
-        }
-      })
-      .finally(() => {
-        if (!controller.signal.aborted) setLoading(false);
-      });
-
-    return () => controller.abort();
-  }, []);
+    return () => {
+      window.clearTimeout(timeout);
+      controller.abort();
+    };
+  }, [page, search]);
 
   async function openCreate() {
     setEditing(null);
@@ -197,7 +206,8 @@ export default function CafeManagementDashboard() {
       } else {
         await api.post("/cafes", payload);
       }
-      await loadData();
+      await loadData(1, search);
+      setPage(1);
       closeForm();
     } catch (requestError: unknown) {
       if (isAxiosError<ApiErrorResponse>(requestError)) {
@@ -221,7 +231,9 @@ export default function CafeManagementDashboard() {
     setError("");
     try {
       await api.delete(`/cafes/${cafe.id}`);
-      await loadData();
+      const nextPage = cafes.length === 1 && page > 1 ? page - 1 : page;
+      await loadData(nextPage, search);
+      setPage(nextPage);
     } catch (requestError: unknown) {
       if (isAxiosError<{ message?: string }>(requestError)) {
         setError(
@@ -295,14 +307,29 @@ export default function CafeManagementDashboard() {
               Tambah, ubah, atau hapus data mitra.
             </p>
           </div>
-          <button
-            type="button"
-            onClick={openCreate}
-            className="inline-flex items-center gap-2 rounded-xl bg-[#FF6B35] px-4 py-2.5 text-sm font-semibold text-white hover:bg-[#E85A2A]"
-          >
-            <span className="material-symbols-outlined text-lg">add</span>
-            Tambah Kafe
-          </button>
+          <div className="flex flex-wrap items-center gap-3">
+            <div className="relative flex min-w-70 items-center">
+            <span className="material-symbols-outlined absolute left-3.5 text-lg text-[#594139]">search</span>
+            <input
+              className="h-11 w-full rounded-2xl border border-[#E9E1E6] bg-[#FFF7F2] pl-10 pr-4 text-sm text-[#241435] outline-none transition-colors focus:border-[#FF6B35]"
+              placeholder="Cari nama kafe atau alamat..."
+              type="search"
+              value={search}
+              onChange={(event) => {
+                setSearch(event.target.value);
+                setPage(1);
+              }}
+            />
+            </div>
+            <button
+              type="button"
+              onClick={openCreate}
+              className="inline-flex items-center gap-2 rounded-xl bg-[#FF6B35] px-4 py-2.5 text-sm font-semibold text-white hover:bg-[#E85A2A]"
+            >
+              <span className="material-symbols-outlined text-lg">add</span>
+              Tambah Kafe
+            </button>
+          </div>
         </div>
 
         {isFormOpen && (
@@ -523,6 +550,7 @@ export default function CafeManagementDashboard() {
             </table>
           </div>
         )}
+        {!loading && <div className="flex flex-col justify-between gap-4 border-t border-[#E9E1E6] bg-[#FFF7F2] p-5 text-sm sm:flex-row sm:items-center sm:px-6"><span className="text-xs text-[#594139]">Halaman {meta.currentPage} dari {totalPages} ({meta.totalItems} kafe)</span><div className="flex items-center gap-1"><button className="flex h-8 w-8 items-center justify-center rounded-xl border border-[#E9E1E6] bg-white text-[#241435] disabled:opacity-40" disabled={page <= 1} onClick={() => setPage((value) => Math.max(1, value - 1))} type="button"><span className="material-symbols-outlined text-base">chevron_left</span></button>{Array.from({ length: Math.min(totalPages, 5) }, (_, index) => index + 1).map((itemPage) => <button key={itemPage} onClick={() => setPage(itemPage)} className={`flex h-8 w-8 items-center justify-center rounded-xl text-xs font-semibold ${page === itemPage ? "bg-[#FF6B35] text-white shadow-xs" : "border border-[#E9E1E6] bg-white text-[#241435]"}`} type="button">{itemPage}</button>)}<button className="flex h-8 w-8 items-center justify-center rounded-xl border border-[#E9E1E6] bg-white text-[#241435] disabled:opacity-40" disabled={page >= totalPages} onClick={() => setPage((value) => Math.min(totalPages, value + 1))} type="button"><span className="material-symbols-outlined text-base">chevron_right</span></button></div></div>}
       </section>
 
       {viewingCafeDetail && (
