@@ -5,6 +5,7 @@ import type { ApiEnvelope } from "../types";
 import CafeAdminOverview from "./CafeAdminOverview";
 import CafeAdminRevenue from "./CafeAdminRevenue";
 import CafeAdminCafes from "./CafeAdminCafes";
+import CafeAdminFrames from "./CafeAdminFrames";
 import CafeAdminSidebar from "./CafeAdminSidebar";
 import type { CafeAdminView, CafeRevenue } from "./types";
 
@@ -60,6 +61,7 @@ export default function CafeAdminDashboard({
     dashboard: "Dashboard",
     revenue: "Revenue Recap",
     cafes: "Kelola Kafe",
+    frames: "Kelola Frame",
   };
 
   return (
@@ -98,6 +100,8 @@ export default function CafeAdminDashboard({
         <main className="min-h-screen px-4 pb-16 pt-16 lg:px-8">
           {view === "cafes" ? (
             <CafeAdminCafes onBack={() => switchView("dashboard")} />
+          ) : view === "frames" ? (
+            <CafeAdminFrames />
           ) : (
             <>
               {error && (
