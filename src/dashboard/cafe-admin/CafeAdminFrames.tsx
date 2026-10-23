@@ -64,6 +64,7 @@ export default function CafeAdminFrames() {
   const [framesLoading, setFramesLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
+  const [formCafeId, setFormCafeId] = useState("");
   const [form, setForm] = useState<FrameForm>(emptyForm);
   const [editing, setEditing] = useState<Frame | null>(null);
   const [isFormOpen, setIsFormOpen] = useState(false);
@@ -132,6 +133,7 @@ export default function CafeAdminFrames() {
   function openCreate() {
     setError("");
     setEditing(null);
+    setFormCafeId(selectedCafeId);
     setForm(emptyForm);
     setIsFormOpen(true);
   }
@@ -154,7 +156,11 @@ export default function CafeAdminFrames() {
       setError("File PNG frame wajib dipilih.");
       return;
     }
-    if (!selectedCafeId) return;
+    const targetCafeId = editing ? selectedCafeId : formCafeId;
+    if (!targetCafeId) {
+      setError("Pilih kafe untuk frame ini.");
+      return;
+    }
 
     setSaving(true);
     setError("");
@@ -164,7 +170,7 @@ export default function CafeAdminFrames() {
     if (editing) {
       payload.append("is_active", String(form.isActive));
     } else {
-      payload.append("cafeId", selectedCafeId);
+      payload.append("cafeId", targetCafeId);
     }
     if (form.file) payload.append("file", form.file);
 
@@ -175,7 +181,11 @@ export default function CafeAdminFrames() {
         await api.post("/booth/frames", payload);
       }
       closeForm();
-      setFrames(await fetchCafeFrames(selectedCafeId));
+      if (targetCafeId !== selectedCafeId) {
+        setSelectedCafeId(targetCafeId);
+      } else {
+        setFrames(await fetchCafeFrames(targetCafeId));
+      }
     } catch (requestError: unknown) {
       setError(getErrorMessage(requestError, "Gagal menyimpan frame."));
     } finally {
@@ -354,6 +364,24 @@ export default function CafeAdminFrames() {
             >
               {editing ? `Ubah ${editing.title}` : "Frame Baru"}
             </h2>
+            {!editing && (
+              <label className="text-sm font-medium">
+                Lokasi Kafe
+                <select
+                  required
+                  value={formCafeId}
+                  onChange={(event) => setFormCafeId(event.target.value)}
+                  className="mt-1.5 w-full rounded-xl border border-[#E9E1E6] bg-white px-3 py-2 text-sm outline-none focus:border-[#FF6B35]"
+                >
+                  <option value="">Pilih kafe</option>
+                  {cafes.map((cafe) => (
+                    <option key={cafe.id} value={cafe.id}>
+                      {cafe.name}
+                    </option>
+                  ))}
+                </select>
+              </label>
+            )}
             <label className="text-sm font-medium">
               Judul Frame
               <input
