@@ -1,1 +1,183 @@
+@import url("https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap");
 @import "tailwindcss";
+
+@theme {
+  --font-sans: "Plus Jakarta Sans", sans-serif;
+  --font-display: "Fredoka", sans-serif;
+
+  --font-headline-sm: "Fredoka", sans-serif;
+  --font-headline-md: "Fredoka", sans-serif;
+  --font-headline-lg: "Fredoka", sans-serif;
+  --font-headline-xl: "Fredoka", sans-serif;
+  --font-headline-lg-mobile: "Fredoka", sans-serif;
+  --font-headline-xl-mobile: "Fredoka", sans-serif;
+  --font-body-sm: "Plus Jakarta Sans", sans-serif;
+  --font-body-md: "Plus Jakarta Sans", sans-serif;
+  --font-body-lg: "Plus Jakarta Sans", sans-serif;
+  --font-title-md: "Plus Jakarta Sans", sans-serif;
+  --font-label-sm: "Plus Jakarta Sans", sans-serif;
+  --font-label-md: "Plus Jakarta Sans", sans-serif;
+  --font-label-lg: "Plus Jakarta Sans", sans-serif;
+
+  --color-secondary-fixed-dim: #f4bf3c;
+  --color-surface-container-high: #f3e2ff;
+  --color-secondary-container: #fec744;
+  --color-on-secondary-container: #715300;
+  --color-on-background: #241435;
+  --color-inverse-on-surface: #f9ecff;
+  --color-surface-container-highest: #efdbff;
+  --color-surface-tint: #ab3500;
+  --color-on-tertiary-container: #003747;
+  --color-tertiary-container: #25a6cf;
+  --color-inverse-surface: #3a294b;
+  --color-surface-bright: #fff7ff;
+  --color-outline: #8d7168;
+  --color-error-container: #ffdad6;
+  --color-surface-container-lowest: #ffffff;
+  --color-on-primary-fixed-variant: #832600;
+  --color-on-error: #ffffff;
+  --color-on-tertiary-fixed-variant: #004d63;
+  --color-secondary-fixed: #ffdf9e;
+  --color-primary-fixed: #ffdbd0;
+  --color-on-surface-variant: #594139;
+  --color-secondary: #795900;
+  --color-on-primary-fixed: #390c00;
+  --color-tertiary: #006783;
+  --color-status-warning: #ed6c02;
+  --color-surface-container-low: #fbf0ff;
+  --color-on-error-container: #93000a;
+  --color-on-secondary: #ffffff;
+  --color-on-tertiary-fixed: #001f29;
+  --color-primary: #ab3500;
+  --color-background: #fff7ff;
+  --color-inverse-primary: #ffb59d;
+  --color-border-subtle: #e9e1e6;
+  --color-brand-primary-hover: #e85a2a;
+  --color-primary-container: #ff6b35;
+  --color-on-primary-container: #5f1900;
+  --color-on-tertiary: #ffffff;
+  --color-primary-fixed-dim: #ffb59d;
+  --color-background-canvas: #fff7f2;
+  --color-tertiary-fixed-dim: #64d3ff;
+  --color-tertiary-fixed: #bce9ff;
+  --color-outline-variant: #e1bfb5;
+  --color-on-primary: #ffffff;
+  --color-on-surface: #241435;
+  --color-surface-dim: #e9d1fd;
+  --color-surface-card: #ffffff;
+  --color-surface-variant: #efdbff;
+  --color-error: #ba1a1a;
+  --color-surface: #fff7ff;
+  --color-status-success: #2e7d32;
+  --color-on-secondary-fixed: #261a00;
+  --color-surface-container: #f7e9ff;
+  --color-on-secondary-fixed-variant: #5b4300;
+  --color-status-danger: #d32f2f;
+
+  --spacing-space-2xl: 3rem;
+  --spacing-space-xl: 2rem;
+  --spacing-space-lg: 1.5rem;
+  --spacing-space-md: 1rem;
+  --spacing-space-sm: 0.5rem;
+  --spacing-space-xs: 0.25rem;
+  --spacing-margin-kiosk: 2.5rem;
+  --spacing-gutter-kiosk: 2rem;
+  --spacing-gutter: 1.5rem;
+  --spacing-margin: 1.5rem;
+}
+
+@utility text-headline-sm {
+  font-size: 20px;
+  line-height: 28px;
+  font-weight: 500;
+}
+@utility text-headline-md {
+  font-size: 28px;
+  line-height: 36px;
+  font-weight: 600;
+}
+@utility text-headline-lg {
+  font-size: 40px;
+  line-height: 48px;
+  font-weight: 600;
+}
+@utility text-headline-xl {
+  font-size: 48px;
+  line-height: 56px;
+  font-weight: 600;
+}
+@utility text-headline-lg-mobile {
+  font-size: 30px;
+  line-height: 38px;
+  font-weight: 600;
+}
+@utility text-headline-xl-mobile {
+  font-size: 36px;
+  line-height: 44px;
+  font-weight: 600;
+}
+@utility text-title-md {
+  font-size: 18px;
+  line-height: 26px;
+  font-weight: 600;
+}
+@utility text-body-sm {
+  font-size: 14px;
+  line-height: 20px;
+  font-weight: 400;
+}
+@utility text-body-md {
+  font-size: 16px;
+  line-height: 24px;
+  font-weight: 400;
+}
+@utility text-body-lg {
+  font-size: 18px;
+  line-height: 28px;
+  font-weight: 500;
+}
+@utility text-label-sm {
+  font-size: 11px;
+  line-height: 14px;
+  font-weight: 500;
+}
+@utility text-label-md {
+  font-size: 13px;
+  line-height: 18px;
+  font-weight: 600;
+}
+@utility text-label-lg {
+  font-size: 16px;
+  line-height: 22px;
+  font-weight: 600;
+}
+
+.material-symbols-outlined {
+  font-family: 'Material Symbols Outlined';
+  font-weight: normal;
+  font-style: normal;
+  font-size: 24px;
+  line-height: 1;
+  letter-spacing: normal;
+  text-transform: none;
+  display: inline-block;
+  white-space: nowrap;
+  word-wrap: normal;
+  direction: ltr;
+  vertical-align: middle;
+  -webkit-font-feature-settings: 'liga';
+  -webkit-font-smoothing: antialiased;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  min-width: 320px;
+  min-height: 100vh;
+  font-family: "Plus Jakarta Sans", sans-serif;
+  background-color: #FFF7F2;
+  color: #241435;
+}
