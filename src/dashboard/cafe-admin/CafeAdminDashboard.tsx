@@ -4,6 +4,7 @@ import type { AuthUser } from "../../auth/types";
 import type { ApiEnvelope } from "../types";
 import CafeAdminOverview from "./CafeAdminOverview";
 import CafeAdminRevenue from "./CafeAdminRevenue";
+import CafeAdminCafes from "./CafeAdminCafes";
 import CafeAdminSidebar from "./CafeAdminSidebar";
 import type { CafeAdminView, CafeRevenue } from "./types";
 
@@ -55,6 +56,12 @@ export default function CafeAdminDashboard({
     }
   };
 
+  const breadcrumbLabel: Record<CafeAdminView, string> = {
+    dashboard: "Dashboard",
+    revenue: "Revenue Recap",
+    cafes: "Kelola Kafe",
+  };
+
   return (
     <div className="min-h-screen bg-[#FFF7F2] font-sans text-[#241435]">
       <CafeAdminSidebar
@@ -80,7 +87,7 @@ export default function CafeAdminDashboard({
               <span className="material-symbols-outlined text-sm">
                 chevron_right
               </span>
-              <span className="font-medium">Dashboard</span>
+              <span className="font-medium">{breadcrumbLabel[view]}</span>
             </div>
           </div>
           <div className="text-right">
@@ -89,31 +96,38 @@ export default function CafeAdminDashboard({
           </div>
         </header>
         <main className="min-h-screen px-4 pb-16 pt-16 lg:px-8">
-          {error && (
-            <div
-              role="alert"
-              className="mb-6 flex items-center gap-2 rounded-2xl border border-[#D32F2F]/20 bg-[#ffdad6] p-4 text-sm text-[#ba1a1a]"
-            >
-              <span className="material-symbols-outlined text-lg">error</span>
-              {error}
-            </div>
-          )}
-          {loading ? (
-            <div className="grid min-h-64 place-items-center rounded-3xl border border-[#E9E1E6] bg-white p-8 text-sm text-[#594139]">
-              Memuat data pendapatan…
-            </div>
+          {view === "cafes" ? (
+            <CafeAdminCafes onBack={() => switchView("dashboard")} />
           ) : (
-            revenue && (
-              <div className="flex w-full flex-col gap-8">
-                <CafeAdminOverview
-                  revenue={revenue}
-                  onRevenueClick={scrollToRevenue}
-                />
-                <section id="revenue-recap" className="scroll-mt-20">
-                  <CafeAdminRevenue revenue={revenue} />
-                </section>
-              </div>
-            )
+            <>
+              {error && (
+                <div
+                  role="alert"
+                  className="mb-6 flex items-center gap-2 rounded-2xl border border-[#D32F2F]/20 bg-[#ffdad6] p-4 text-sm text-[#ba1a1a]"
+                >
+                  <span className="material-symbols-outlined text-lg">error</span>
+                  {error}
+                </div>
+              )}
+              {loading ? (
+                <div className="grid min-h-64 place-items-center rounded-3xl border border-[#E9E1E6] bg-white p-8 text-sm text-[#594139]">
+                  Memuat data pendapatan…
+                </div>
+              ) : (
+                revenue && (
+                  <div className="flex w-full flex-col gap-8">
+                    <CafeAdminOverview
+                      revenue={revenue}
+                      onRevenueClick={scrollToRevenue}
+                      onCafesClick={() => switchView("cafes")}
+                    />
+                    <section id="revenue-recap" className="scroll-mt-20">
+                      <CafeAdminRevenue revenue={revenue} />
+                    </section>
+                  </div>
+                )
+              )}
+            </>
           )}
         </main>
       </div>

@@ -1,4 +1,4 @@
-export type CafeAdminView = "dashboard" | "revenue";
+export type CafeAdminView = "dashboard" | "revenue" | "cafes";
 
 export type CafeRevenue = {
   summary: { totalCafeShareRevenue: number; totalTransactions: number };
