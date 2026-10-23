@@ -12,6 +12,7 @@ interface CafeAdminSidebarProps {
 const navigation: { view: CafeAdminView; icon: string; label: string }[] = [
   { view: "dashboard", icon: "space_dashboard", label: "Dashboard" },
   { view: "cafes", icon: "storefront", label: "Kelola Kafe" },
+  { view: "frames", icon: "photo_library", label: "Kelola Frame" },
 ];
 
 export default function CafeAdminSidebar({ user, view, isOpen, onNavigate, onLogout }: CafeAdminSidebarProps) {
