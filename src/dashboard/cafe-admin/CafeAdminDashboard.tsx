@@ -6,6 +6,7 @@ import CafeAdminOverview from "./CafeAdminOverview";
 import CafeAdminRevenue from "./CafeAdminRevenue";
 import CafeAdminCafes from "./CafeAdminCafes";
 import CafeAdminFrames from "./CafeAdminFrames";
+import CafeAdminPackages from "./CafeAdminPackages";
 import CafeAdminSidebar from "./CafeAdminSidebar";
 import type { CafeAdminView, CafeRevenue } from "./types";
 
@@ -62,6 +63,7 @@ export default function CafeAdminDashboard({
     revenue: "Revenue Recap",
     cafes: "Kelola Kafe",
     frames: "Kelola Frame",
+    packages: "Kelola Paket",
   };
 
   return (
@@ -102,6 +104,8 @@ export default function CafeAdminDashboard({
             <CafeAdminCafes onBack={() => switchView("dashboard")} />
           ) : view === "frames" ? (
             <CafeAdminFrames />
+          ) : view === "packages" ? (
+            <CafeAdminPackages />
           ) : (
             <>
               {error && (
