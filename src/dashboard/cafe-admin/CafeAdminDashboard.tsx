@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useNavigate } from "react-router";
 import api from "../../lib/client/axios";
 import type { AuthUser } from "../../auth/types";
 import type { ApiEnvelope } from "../types";
@@ -7,6 +8,8 @@ import CafeAdminRevenue from "./CafeAdminRevenue";
 import CafeAdminCafes from "./CafeAdminCafes";
 import CafeAdminFrames from "./CafeAdminFrames";
 import CafeAdminPackages from "./CafeAdminPackages";
+import CafeTerminalSetup from "./CafeTerminalSetup";
+import CafePhotoBooth from "./CafePhotoBooth";
 import CafeAdminSidebar from "./CafeAdminSidebar";
 import type { CafeAdminView, CafeRevenue } from "./types";
 
@@ -24,6 +27,7 @@ export default function CafeAdminDashboard({
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const navigate = useNavigate();
 
   useEffect(() => {
     const controller = new AbortController();
@@ -49,6 +53,11 @@ export default function CafeAdminDashboard({
   };
 
   const switchView = (nextView: CafeAdminView) => {
+    if (nextView === "photo-booth") {
+      setMobileNavOpen(false);
+      navigate("/sesi-foto");
+      return;
+    }
     setView(nextView);
     setMobileNavOpen(false);
     if (nextView === "revenue") {
@@ -64,6 +73,8 @@ export default function CafeAdminDashboard({
     cafes: "Kelola Kafe",
     frames: "Kelola Frame",
     packages: "Kelola Paket",
+    "terminal-setup": "Setup Terminal",
+    "photo-booth": "Sesi Foto",
   };
 
   return (
@@ -106,6 +117,10 @@ export default function CafeAdminDashboard({
             <CafeAdminFrames />
           ) : view === "packages" ? (
             <CafeAdminPackages />
+          ) : view === "terminal-setup" ? (
+            <CafeTerminalSetup />
+          ) : view === "photo-booth" ? (
+            <CafePhotoBooth />
           ) : (
             <>
               {error && (

@@ -14,6 +14,8 @@ const navigation: { view: CafeAdminView; icon: string; label: string }[] = [
   { view: "cafes", icon: "storefront", label: "Kelola Kafe" },
   { view: "frames", icon: "photo_library", label: "Kelola Frame" },
   { view: "packages", icon: "loyalty", label: "Kelola Paket" },
+  { view: "terminal-setup", icon: "settings", label: "Setup Terminal" },
+  { view: "photo-booth", icon: "photo_camera", label: "Sesi Foto" },
 ];
 
 export default function CafeAdminSidebar({ user, view, isOpen, onNavigate, onLogout }: CafeAdminSidebarProps) {

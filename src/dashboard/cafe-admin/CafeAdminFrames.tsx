@@ -103,25 +103,29 @@ export default function CafeAdminFrames() {
 
   useEffect(() => {
     if (!selectedCafeId) {
-      setFrames([]);
       return;
     }
     const controller = new AbortController();
-    setFramesLoading(true);
-    setError("");
-    void fetchCafeFrames(selectedCafeId, controller.signal)
-      .then((nextFrames) => {
-        if (!controller.signal.aborted) setFrames(nextFrames);
-      })
-      .catch((requestError: unknown) => {
-        if (!controller.signal.aborted) {
-          setError(getErrorMessage(requestError, "Gagal memuat frame kafe."));
-        }
-      })
-      .finally(() => {
-        if (!controller.signal.aborted) setFramesLoading(false);
-      });
-    return () => controller.abort();
+    const timeout = window.setTimeout(() => {
+      setFramesLoading(true);
+      setError("");
+      void fetchCafeFrames(selectedCafeId, controller.signal)
+        .then((nextFrames) => {
+          if (!controller.signal.aborted) setFrames(nextFrames);
+        })
+        .catch((requestError: unknown) => {
+          if (!controller.signal.aborted) {
+            setError(getErrorMessage(requestError, "Gagal memuat frame kafe."));
+          }
+        })
+        .finally(() => {
+          if (!controller.signal.aborted) setFramesLoading(false);
+        });
+    }, 0);
+    return () => {
+      window.clearTimeout(timeout);
+      controller.abort();
+    };
   }, [selectedCafeId]);
 
   function closeForm() {

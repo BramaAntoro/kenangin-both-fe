@@ -43,24 +43,29 @@ export default function CafeAdminOverview({
 
   useEffect(() => {
     const controller = new AbortController();
-    setCafesLoading(true);
-    api
-      .get<ApiEnvelope<{ cafes: CafeAdminCafe[] }>>(
-        `/reports/revenue-recap/mine/cafes?page=${cafePage}&limit=${CAFE_LIMIT}`,
-        { signal: controller.signal },
-      )
-      .then((res) => {
-        if (res.data?.data?.cafes) {
-          setCafes(res.data.data.cafes);
-          setCafeTotal(Number(res.data.meta?.totalItems ?? 0));
-          setCafeTotalPages(Number(res.data.meta?.totalPages ?? 1));
-        }
-      })
-      .catch(() => {/* silent */})
-      .finally(() => {
-        if (!controller.signal.aborted) setCafesLoading(false);
-      });
-    return () => controller.abort();
+    const timeout = window.setTimeout(() => {
+      setCafesLoading(true);
+      api
+        .get<ApiEnvelope<{ cafes: CafeAdminCafe[] }>>(
+          `/reports/revenue-recap/mine/cafes?page=${cafePage}&limit=${CAFE_LIMIT}`,
+          { signal: controller.signal },
+        )
+        .then((res) => {
+          if (res.data?.data?.cafes) {
+            setCafes(res.data.data.cafes);
+            setCafeTotal(Number(res.data.meta?.totalItems ?? 0));
+            setCafeTotalPages(Number(res.data.meta?.totalPages ?? 1));
+          }
+        })
+        .catch(() => {/* silent */})
+        .finally(() => {
+          if (!controller.signal.aborted) setCafesLoading(false);
+        });
+    }, 0);
+    return () => {
+      window.clearTimeout(timeout);
+      controller.abort();
+    };
   }, [cafePage]);
 
   return (
