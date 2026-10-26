@@ -1,4 +1,11 @@
-export type CafeAdminView = "dashboard" | "revenue" | "cafes" | "frames" | "packages";
+export type CafeAdminView =
+  | "dashboard"
+  | "revenue"
+  | "cafes"
+  | "frames"
+  | "packages"
+  | "photo-booth"
+  | "terminal-setup";
 
 export type CafeRevenue = {
   summary: { totalCafeShareRevenue: number; totalTransactions: number };

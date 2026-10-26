@@ -2,6 +2,8 @@ import { Navigate, Route, Routes } from "react-router";
 import DashboardPage from "./pages/DashboardPage";
 import AuthPage from "./pages/AuthPage";
 import { ProtectedRoute, PublicRoute } from "./auth/AuthProvider";
+import PhotoDownloadPage from "./pages/PhotoDownloadPage";
+import CafePhotoBoothPage from "./pages/CafePhotoBoothPage";
 
 export default function App() {
   return (
@@ -22,6 +24,15 @@ export default function App() {
           </ProtectedRoute>
         }
       />
+      <Route
+        path="/sesi-foto"
+        element={
+          <ProtectedRoute>
+            <CafePhotoBoothPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route path="/session/:sessionCode" element={<PhotoDownloadPage />} />
       <Route path="*" element={<Navigate to="/login" replace />} />
     </Routes>
   );

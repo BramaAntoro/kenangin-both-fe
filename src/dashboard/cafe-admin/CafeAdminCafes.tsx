@@ -199,9 +199,9 @@ export default function CafeAdminCafes({ onBack }: CafeAdminCafesProps) {
 
   useEffect(() => {
     const controller = new AbortController();
-    setLoading(true);
 
     const timeout = window.setTimeout(() => {
+      setLoading(true);
       api
         .get<ApiEnvelope<{ cafes: CafeAdminCafe[] }>>(
           `/reports/revenue-recap/mine/cafes?page=${page}&limit=${LIMIT}&search=${encodeURIComponent(search.trim())}`,
@@ -447,5 +447,4 @@ export default function CafeAdminCafes({ onBack }: CafeAdminCafesProps) {
     </>
   );
 }
-
 
