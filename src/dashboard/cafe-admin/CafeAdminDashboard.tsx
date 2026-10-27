@@ -1,169 +1,159 @@
 import { useEffect, useState } from "react";
+import { useNavigate } from "react-router";
 import api from "../../lib/client/axios";
 import type { AuthUser } from "../../auth/types";
-import type { ApiEnvelope, Kiosk } from "../types";
+import type { ApiEnvelope } from "../types";
+import CafeAdminOverview from "./CafeAdminOverview";
+import CafeAdminRevenue from "./CafeAdminRevenue";
+import CafeAdminCafes from "./CafeAdminCafes";
+import CafeAdminFrames from "./CafeAdminFrames";
+import CafeAdminPackages from "./CafeAdminPackages";
+import CafeTerminalSetup from "./CafeTerminalSetup";
+import CafePhotoBooth from "./CafePhotoBooth";
+import CafeAdminSidebar from "./CafeAdminSidebar";
+import type { CafeAdminView, CafeRevenue } from "./types";
 
 interface CafeAdminDashboardProps {
   user: AuthUser;
   onLogout: () => void;
 }
 
-export default function CafeAdminDashboard({ user, onLogout }: CafeAdminDashboardProps) {
-  const [kiosksByCafe, setKiosksByCafe] = useState<Record<string, Kiosk[]>>({});
+export default function CafeAdminDashboard({
+  user,
+  onLogout,
+}: CafeAdminDashboardProps) {
+  const [revenue, setRevenue] = useState<CafeRevenue | null>(null);
+  const [view, setView] = useState<CafeAdminView>("dashboard");
+  const [mobileNavOpen, setMobileNavOpen] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+  const navigate = useNavigate();
 
   useEffect(() => {
     const controller = new AbortController();
     api
-      .get<ApiEnvelope<Record<string, Kiosk[]>>>("/kiosks", { signal: controller.signal })
-      .then((res) => {
-        if (res.data?.data) {
-          setKiosksByCafe(res.data.data);
-        }
+      .get<ApiEnvelope<CafeRevenue>>("/reports/revenue-recap/mine", {
+        signal: controller.signal,
       })
-      .catch(() => {
-        // Fallback / silent fail
-      })
-      .finally(() => {
-        if (!controller.signal.aborted) setLoading(false);
-      });
-
+      .then((response) => setRevenue(response.data.data))
+      .catch(
+        () =>
+          !controller.signal.aborted &&
+          setError("Data belum dapat dimuat. Coba lagi sebentar, ya."),
+      )
+      .finally(() => !controller.signal.aborted && setLoading(false));
     return () => controller.abort();
   }, []);
 
-  const cafeNames = Object.keys(kiosksByCafe);
-  const allKiosks = Object.values(kiosksByCafe).flat();
-  const activeCount = allKiosks.filter((k) => k.status === "active").length;
+  const scrollToRevenue = () => {
+    const el = document.getElementById("revenue-recap");
+    if (el) {
+      el.scrollIntoView({ behavior: "smooth" });
+    }
+  };
+
+  const switchView = (nextView: CafeAdminView) => {
+    if (nextView === "photo-booth") {
+      setMobileNavOpen(false);
+      navigate("/sesi-foto");
+      return;
+    }
+    setView(nextView);
+    setMobileNavOpen(false);
+    if (nextView === "revenue") {
+      setTimeout(scrollToRevenue, 100);
+    } else {
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    }
+  };
+
+  const breadcrumbLabel: Record<CafeAdminView, string> = {
+    dashboard: "Dashboard",
+    revenue: "Revenue Recap",
+    cafes: "Kelola Kafe",
+    frames: "Kelola Frame",
+    packages: "Kelola Paket",
+    "terminal-setup": "Setup Terminal",
+    "photo-booth": "Sesi Foto",
+  };
 
   return (
-    <main className="min-h-screen bg-background-canvas px-4 sm:px-8 py-8 text-on-surface">
-      <div className="mx-auto max-w-4xl">
-        {/* Header */}
-        <header className="mb-8 flex items-center justify-between border-b border-border-subtle pb-6">
-          <div className="flex items-center gap-3">
-            <img src="/lockups/lockup.webp" alt="Kenangin" className="w-40 sm:w-48 object-contain" />
-            <span className="hidden sm:inline-block px-2.5 py-0.5 rounded-full bg-secondary-container text-on-secondary-container font-label-sm text-label-sm font-semibold">
-              Dashboard Mitra Kafe
-            </span>
-          </div>
-          <button
-            type="button"
-            onClick={onLogout}
-            className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-surface-card hover:bg-surface-container text-on-surface font-label-md text-label-md shadow-sm border border-border-subtle transition-all"
-          >
-            <span className="material-symbols-outlined text-lg">logout</span>
-            <span>Keluar</span>
-          </button>
-        </header>
-
-        {/* Welcome Hero */}
-        <section className="mb-6 rounded-2xl bg-surface-card p-space-lg sm:p-space-xl shadow-sm border border-border-subtle">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-            <div>
-              <span className="font-label-sm text-label-sm uppercase tracking-wider text-primary font-semibold">
-                Selamat Datang Mitra Kenangin
+    <div className="min-h-screen bg-[#FFF7F2] font-sans text-[#241435]">
+      <CafeAdminSidebar
+        user={user}
+        view={view}
+        isOpen={mobileNavOpen}
+        onNavigate={switchView}
+        onLogout={onLogout}
+      />
+      <div className="lg:pl-72">
+        <header className="fixed left-0 right-0 top-0 z-40 flex h-16 items-center justify-between border-b border-[#E9E1E6] bg-[#FFF7F2]/90 px-4 backdrop-blur-md lg:left-72 lg:px-8">
+          <div className="flex items-center gap-4">
+            <button
+              type="button"
+              onClick={() => setMobileNavOpen(!mobileNavOpen)}
+              className="rounded-xl border border-[#E9E1E6] bg-white p-2 lg:hidden"
+              aria-label="Buka navigasi"
+            >
+              <span className="material-symbols-outlined text-xl">menu</span>
+            </button>
+            <div className="hidden items-center gap-2 text-xs sm:flex">
+              <span className="font-semibold text-[#FF6B35]">Kenangin</span>
+              <span className="material-symbols-outlined text-sm">
+                chevron_right
               </span>
-              <h1 className="font-headline-md text-headline-md text-on-surface mt-1 font-semibold">
-                {user.name}
-              </h1>
-              <p className="font-body-sm text-body-sm text-on-surface-variant mt-1">
-                Kelola unit photo booth, pantau status operasional, dan bagi hasil otomatis lokasi Anda.
-              </p>
-            </div>
-            <div className="flex items-center gap-3 self-start sm:self-auto p-space-sm bg-surface-container-low rounded-xl">
-              <span className="material-symbols-outlined text-3xl text-primary-container">storefront</span>
-              <div>
-                <span className="font-label-sm text-label-sm text-on-surface-variant">Status Akun</span>
-                <p className="font-title-md text-title-md text-on-surface font-semibold">Mitra Kafe Terverifikasi</p>
-              </div>
+              <span className="font-medium">{breadcrumbLabel[view]}</span>
             </div>
           </div>
-        </section>
-
-        {/* Kiosks Summary */}
-        <section className="mb-6 grid grid-cols-1 sm:grid-cols-3 gap-space-md">
-          <div className="rounded-2xl bg-surface-card p-space-md shadow-sm border border-border-subtle">
-            <span className="font-label-sm text-label-sm text-on-surface-variant">Total Unit Kiosk</span>
-            <p className="font-headline-md text-headline-md text-on-surface font-semibold mt-1">
-              {allKiosks.length > 0 ? allKiosks.length : 1} Unit
-            </p>
+          <div className="text-right">
+            <p className="text-sm font-semibold">{user.email ?? user.name}</p>
+            <p className="text-[11px] text-[#594139]">Admin Kafe</p>
           </div>
-          <div className="rounded-2xl bg-surface-card p-space-md shadow-sm border border-border-subtle">
-            <span className="font-label-sm text-label-sm text-on-surface-variant">Unit Operasional</span>
-            <p className="font-headline-md text-headline-md text-status-success font-semibold mt-1 flex items-center gap-1.5">
-              <span className="w-2.5 h-2.5 rounded-full bg-status-success animate-pulse"></span>
-              {allKiosks.length > 0 ? activeCount : 1} Online
-            </p>
-          </div>
-          <div className="rounded-2xl bg-surface-card p-space-md shadow-sm border border-border-subtle">
-            <span className="font-label-sm text-label-sm text-on-surface-variant">Porsi Bagi Hasil</span>
-            <p className="font-headline-md text-headline-md text-secondary font-semibold mt-1">
-              40% Net Gross
-            </p>
-          </div>
-        </section>
-
-        {/* Kiosks List */}
-        <section className="rounded-2xl bg-surface-card shadow-sm border border-border-subtle overflow-hidden">
-          <div className="p-space-lg border-b border-border-subtle flex items-center justify-between">
-            <h2 className="font-title-md text-title-md text-on-surface">Unit Kiosk di Lokasi Anda</h2>
-            <span className="font-label-sm text-label-sm text-on-surface-variant">
-              Auto-Settlement H2H Virtual Account
-            </span>
-          </div>
-
-          {loading ? (
-            <div className="p-space-xl text-center font-body-sm text-on-surface-variant">
-              Memuat data unit booth…
-            </div>
-          ) : cafeNames.length > 0 ? (
-            <div className="divide-y divide-border-subtle">
-              {cafeNames.map((cafeName) => (
-                <div key={cafeName} className="p-space-lg">
-                  <h3 className="font-title-md text-title-md text-on-surface mb-space-sm flex items-center gap-2">
-                    <span className="material-symbols-outlined text-primary-container text-xl">local_cafe</span>
-                    <span>{cafeName}</span>
-                  </h3>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-space-sm">
-                    {kiosksByCafe[cafeName]?.map((kiosk) => (
-                      <div
-                        key={kiosk.id || kiosk.kioskCode}
-                        className="flex items-center justify-between p-space-sm rounded-xl bg-surface-container-low"
-                      >
-                        <div>
-                          <p className="font-label-md text-label-md text-on-surface">{kiosk.name || "Kenangin Photobooth"}</p>
-                          <span className="font-label-sm text-label-sm text-on-surface-variant">
-                            Kode: {kiosk.kioskCode || "K-01"}
-                          </span>
-                        </div>
-                        <span
-                          className={`px-2.5 py-1 rounded-full font-label-sm text-label-sm font-semibold flex items-center gap-1 ${
-                            kiosk.status === "active"
-                              ? "bg-status-success/10 text-status-success"
-                              : "bg-surface-container text-on-surface-variant"
-                          }`}
-                        >
-                          <span
-                            className={`w-2 h-2 rounded-full ${
-                              kiosk.status === "active" ? "bg-status-success animate-pulse" : "bg-outline"
-                            }`}
-                          ></span>
-                          {kiosk.status === "active" ? "Online" : "Standby"}
-                        </span>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              ))}
-            </div>
+        </header>
+        <main className="min-h-screen px-4 pb-16 pt-16 lg:px-8">
+          {view === "cafes" ? (
+            <CafeAdminCafes onBack={() => switchView("dashboard")} />
+          ) : view === "frames" ? (
+            <CafeAdminFrames />
+          ) : view === "packages" ? (
+            <CafeAdminPackages />
+          ) : view === "terminal-setup" ? (
+            <CafeTerminalSetup />
+          ) : view === "photo-booth" ? (
+            <CafePhotoBooth />
           ) : (
-            <div className="p-space-lg text-center font-body-sm text-on-surface-variant">
-              Unit kiosk Anda sedang disiapkan oleh tim Kenangin HQ. Hubungi operasional untuk bantuan aktivasi.
-            </div>
+            <>
+              {error && (
+                <div
+                  role="alert"
+                  className="mb-6 flex items-center gap-2 rounded-2xl border border-[#D32F2F]/20 bg-[#ffdad6] p-4 text-sm text-[#ba1a1a]"
+                >
+                  <span className="material-symbols-outlined text-lg">error</span>
+                  {error}
+                </div>
+              )}
+              {loading ? (
+                <div className="grid min-h-64 place-items-center rounded-3xl border border-[#E9E1E6] bg-white p-8 text-sm text-[#594139]">
+                  Memuat data pendapatan…
+                </div>
+              ) : (
+                revenue && (
+                  <div className="flex w-full flex-col gap-8">
+                    <CafeAdminOverview
+                      revenue={revenue}
+                      onRevenueClick={scrollToRevenue}
+                      onCafesClick={() => switchView("cafes")}
+                    />
+                    <section id="revenue-recap" className="scroll-mt-20">
+                      <CafeAdminRevenue revenue={revenue} />
+                    </section>
+                  </div>
+                )
+              )}
+            </>
           )}
-        </section>
+        </main>
       </div>
-    </main>
+    </div>
   );
 }
-

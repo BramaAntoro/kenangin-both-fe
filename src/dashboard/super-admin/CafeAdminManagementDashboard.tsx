@@ -1,4 +1,4 @@
-import { useEffect, useState, type FormEvent } from "react";
+import { useCallback, useEffect, useState, type FormEvent } from "react";
 import { isAxiosError } from "axios";
 import api from "../../lib/client/axios";
 import type { ApiEnvelope } from "../types";
@@ -62,11 +62,11 @@ export default function CafeAdminManagementDashboard() {
   });
   const totalPages = Math.max(meta.totalPages, 1);
 
-  async function loadData(
+  const loadData = useCallback(async (
     pageValue = page,
     searchValue = search,
     signal?: AbortSignal,
-  ) {
+  ) => {
     const response = await api.get<ApiEnvelope<{ cafeAdmins: CafeAdmin[] }>>(
       "/users/cafe-admin",
       {
@@ -84,13 +84,13 @@ export default function CafeAdminManagementDashboard() {
       totalPages: response.data.meta?.totalPages ?? 0,
       totalItems: response.data.meta?.totalItems ?? 0,
     });
-  }
+  }, [page, search]);
 
   useEffect(() => {
     const controller = new AbortController();
-    setLoading(true);
     const timeout = window.setTimeout(
-      () =>
+      () => {
+        setLoading(true);
         loadData(page, search, controller.signal)
           .catch((requestError: unknown) => {
             if (
@@ -105,14 +105,15 @@ export default function CafeAdminManagementDashboard() {
           })
           .finally(() => {
             if (!controller.signal.aborted) setLoading(false);
-          }),
+          });
+      },
       search ? 250 : 0,
     );
     return () => {
       window.clearTimeout(timeout);
       controller.abort();
     };
-  }, [page, search]);
+  }, [loadData, page, search]);
 
   function openCreate() {
     setEditing(null);

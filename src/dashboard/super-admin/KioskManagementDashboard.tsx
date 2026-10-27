@@ -1,4 +1,4 @@
-import { useEffect, useState, useMemo, type FormEvent } from "react";
+import { useCallback, useEffect, useState, useMemo, type FormEvent } from "react";
 import { isAxiosError } from "axios";
 import api from "../../lib/client/axios";
 import type { ApiEnvelope } from "../types";
@@ -71,7 +71,7 @@ export default function KioskManagementDashboard() {
     return pages;
   }, [page, totalPages]);
 
-  async function loadData(pageValue = page, searchValue = search, signal?: AbortSignal) {
+  const loadData = useCallback(async (pageValue = page, searchValue = search, signal?: AbortSignal) => {
     const response = await api.get<ApiEnvelope<{ kiosks: KioskRow[] }>>("/kiosks", {
       params: {
         page: pageValue,
@@ -87,15 +87,15 @@ export default function KioskManagementDashboard() {
       totalPages: response.data.meta?.totalPages ?? 1,
       totalItems: response.data.meta?.totalItems ?? 0,
     });
-  }
+  }, [page, search]);
 
   useEffect(() => {
     const controller = new AbortController();
-    setLoading(true);
-    setError("");
 
     const timeout = window.setTimeout(
       () => {
+        setLoading(true);
+        setError("");
         loadData(page, search, controller.signal)
           .catch((requestError: unknown) => {
             if (controller.signal.aborted) return;
@@ -116,7 +116,7 @@ export default function KioskManagementDashboard() {
       window.clearTimeout(timeout);
       controller.abort();
     };
-  }, [page, search]);
+  }, [loadData, page, search]);
 
   // Handle tombol escape untuk menutup modal
   useEffect(() => {
