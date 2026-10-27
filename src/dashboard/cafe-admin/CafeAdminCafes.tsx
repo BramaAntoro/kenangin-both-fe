@@ -195,7 +195,7 @@ export default function CafeAdminCafes({ onBack }: CafeAdminCafesProps) {
   const [kioskLoading, setKioskLoading] = useState<Record<string, boolean>>({});
   const [kioskError, setKioskError] = useState<Record<string, string>>({});
 
-  const LIMIT = 6;
+  const LIMIT = 5;
 
   useEffect(() => {
     const controller = new AbortController();
@@ -400,8 +400,7 @@ export default function CafeAdminCafes({ onBack }: CafeAdminCafesProps) {
             </div>
 
             {/* Pagination */}
-            {totalPages > 1 && (
-              <div className="flex flex-col items-center justify-between gap-3 sm:flex-row">
+            <div className="flex flex-col items-center justify-between gap-3 sm:flex-row">
                 <p className="text-xs text-[#594139]">
                   Menampilkan {cafes.length} dari {totalItems} kafe
                 </p>
@@ -439,12 +438,10 @@ export default function CafeAdminCafes({ onBack }: CafeAdminCafesProps) {
                     <span className="material-symbols-outlined text-base">chevron_right</span>
                   </button>
                 </div>
-              </div>
-            )}
+            </div>
           </>
         )}
       </div>
     </>
   );
 }
-
