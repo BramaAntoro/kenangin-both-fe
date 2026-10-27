@@ -56,6 +56,7 @@ export default function CafePhotoBooth() {
   const [terminalConfig] = useState(readTerminalConfig);
   const [selectedCafeId] = useState(terminalConfig.cafeId ?? "");
   const [selectedKioskId] = useState(terminalConfig.kioskId ?? "");
+  const isTerminalConfigured = Boolean(selectedCafeId && selectedKioskId);
   const [terminalCafeName, setTerminalCafeName] = useState("");
   const [terminalKioskName, setTerminalKioskName] = useState("");
   const [selectedPackageId, setSelectedPackageId] = useState("");
@@ -252,7 +253,10 @@ export default function CafePhotoBooth() {
       >(`/cafes/packages/${selectedCafeId}`, { signal: controller.signal }),
       api.get<
         ApiEnvelope<{
-          frames: { cafes: { cafeId: string; frames: Frame[] }[] };
+          frames: {
+            global: Frame[];
+            cafes: { cafeId: string; frames: Frame[] }[];
+          };
         }>
       >(`/booth/frames?cafe_id=${selectedCafeId}`, {
         signal: controller.signal,
@@ -273,7 +277,10 @@ export default function CafePhotoBooth() {
           )?.name ?? "",
         );
         setPackages(packageResponse.data.data.cafe.packages);
-        setFrames(cafeFrames?.frames ?? []);
+        setFrames([
+          ...frameResponse.data.data.frames.global,
+          ...(cafeFrames?.frames ?? []),
+        ]);
         setSelectedPackageId("");
         setSelectedFrameId("");
       })
@@ -614,20 +621,45 @@ export default function CafePhotoBooth() {
         </p>
       )}
 
-      {step === "packages" && (
-        <PackageSelectionStep
+      {!isTerminalConfigured ? (
+        <section
+          role="alert"
+          className="rounded-3xl border border-[#FFC845]/50 bg-white p-6 shadow-sm sm:p-8"
+        >
+          <div className="flex items-start gap-4">
+            <span className="grid size-12 shrink-0 place-items-center rounded-2xl bg-[#FFC845]/25 text-[#795900]">
+              <span className="material-symbols-outlined text-2xl">
+                settings
+              </span>
+            </span>
+            <div>
+              <h2 className="font-display text-xl font-semibold">
+                Terminal belum di-setup
+              </h2>
+              <p className="mt-1 text-sm leading-relaxed text-[#594139]">
+                Sesi foto belum dapat dimulai. Buka Dashboard, pilih Setup
+                Terminal, lalu pilih kafe dan kiosk aktif dan simpan
+                konfigurasinya.
+              </p>
+            </div>
+          </div>
+        </section>
+      ) : (
+        <>
+          {step === "packages" && (
+            <PackageSelectionStep
           packages={packages}
           selectedPackageId={selectedPackageId}
           loading={loading}
-          canPay={Boolean(selectedCafeId && selectedKioskId)}
+          canPay={isTerminalConfigured}
           formatPrice={money}
           onSelect={setSelectedPackageId}
           onStartPayment={() => void startPayment()}
-        />
-      )}
+            />
+          )}
 
-      {step === "frame" && (
-        <FrameSelectionStep
+          {step === "frame" && (
+            <FrameSelectionStep
           frames={frames}
           selectedPackage={selectedPackage}
           selectedFrameId={selectedFrameId}
@@ -635,11 +667,11 @@ export default function CafePhotoBooth() {
           assetUrl={assetUrl}
           onSelect={setSelectedFrameId}
           onBeginCapture={beginCapture}
-        />
-      )}
+            />
+          )}
 
-      {step === "capture" && (
-        <CaptureStep
+          {step === "capture" && (
+            <CaptureStep
           videoRef={videoRef}
           frame={selectedFrame}
           frameLayout={selectedFrameLayout}
@@ -659,11 +691,11 @@ export default function CafePhotoBooth() {
           }}
           onStartCaptureCountdown={startCaptureCountdown}
           onContinueToEdit={continueToEdit}
-        />
-      )}
+            />
+          )}
 
-      {step === "edit" && (
-        <PhotoEditorStep
+          {step === "edit" && (
+            <PhotoEditorStep
           editorRef={editorRef}
           frame={selectedFrame}
           frameLayout={selectedFrameLayout}
@@ -744,23 +776,25 @@ export default function CafePhotoBooth() {
             beginCapture();
           }}
           onSave={() => void saveSession()}
-        />
-      )}
+            />
+          )}
 
-      {step === "complete" && (
-        <CompletionStep
+          {step === "complete" && (
+            <CompletionStep
           photoUrl={photoUrl}
           finishCountdown={finishCountdown}
           onShowDownloadQr={() => setShowDownloadQr(true)}
           onFinish={finishSession}
-        />
-      )}
+            />
+          )}
 
-      {step === "complete" && showDownloadQr && sessionCode && (
-        <DownloadQrDialog
+          {step === "complete" && showDownloadQr && sessionCode && (
+            <DownloadQrDialog
           downloadUrl={downloadUrl}
           onClose={() => setShowDownloadQr(false)}
-        />
+            />
+          )}
+        </>
       )}
     </div>
   );
