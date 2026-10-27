@@ -1,6 +1,42 @@
 @import url("https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap");
 @import "tailwindcss";
 
+@property --camera-aperture {
+  syntax: "<percentage>";
+  inherits: false;
+  initial-value: 150%;
+}
+
+@keyframes camera-lens-shutter {
+  0% {
+    opacity: 0;
+    --camera-aperture: 150%;
+  }
+
+  30%,
+  58% {
+    opacity: 1;
+    --camera-aperture: 0%;
+  }
+
+  100% {
+    opacity: 0;
+    --camera-aperture: 150%;
+  }
+}
+
+.camera-lens-aperture {
+  -webkit-mask-image: radial-gradient(circle, transparent 0%, transparent var(--camera-aperture), #000 calc(var(--camera-aperture) + 1%));
+  mask-image: radial-gradient(circle, transparent 0%, transparent var(--camera-aperture), #000 calc(var(--camera-aperture) + 1%));
+  animation: camera-lens-shutter 650ms ease-in-out both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .camera-lens-aperture {
+    animation-duration: 1ms;
+  }
+}
+
 @theme {
   --font-sans: "Plus Jakarta Sans", sans-serif;
   --font-display: "Fredoka", sans-serif;
