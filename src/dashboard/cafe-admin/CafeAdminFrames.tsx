@@ -45,25 +45,33 @@ function frameImageUrl(frameUrl: string) {
     : new URL(frameUrl, api.defaults.baseURL).toString();
 }
 
-async function fetchCafeFrames(cafeId: string, signal?: AbortSignal) {
+async function fetchCafeFrames(cafeId: string, page: number, signal?: AbortSignal) {
   const response = await api.get<ApiEnvelope<FramesResponse>>(
-    `/booth/frames?cafe_id=${encodeURIComponent(cafeId)}`,
+    `/booth/frames?cafe_id=${encodeURIComponent(cafeId)}&page=${page}&limit=5`,
     { signal },
   );
   const { global, cafes: cafeGroups } = response.data.data.frames;
   const cafeFrames =
     cafeGroups.find((cafe) => cafe.cafeId === cafeId)?.frames ?? [];
-  return [...global, ...cafeFrames];
+  return {
+    frames: [...global, ...cafeFrames],
+    totalItems: response.data.meta?.totalItems ?? 0,
+    totalPages: response.data.meta?.totalPages ?? 0,
+  };
 }
 
 export default function CafeAdminFrames() {
   const [cafes, setCafes] = useState<Cafe[]>([]);
   const [selectedCafeId, setSelectedCafeId] = useState("");
   const [frames, setFrames] = useState<Frame[]>([]);
+  const [page, setPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [totalItems, setTotalItems] = useState(0);
   const [cafesLoading, setCafesLoading] = useState(true);
   const [framesLoading, setFramesLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
+  const [formError, setFormError] = useState("");
   const [formCafeId, setFormCafeId] = useState("");
   const [form, setForm] = useState<FrameForm>(emptyForm);
   const [editing, setEditing] = useState<Frame | null>(null);
@@ -109,9 +117,13 @@ export default function CafeAdminFrames() {
     const timeout = window.setTimeout(() => {
       setFramesLoading(true);
       setError("");
-      void fetchCafeFrames(selectedCafeId, controller.signal)
-        .then((nextFrames) => {
-          if (!controller.signal.aborted) setFrames(nextFrames);
+      void fetchCafeFrames(selectedCafeId, page, controller.signal)
+        .then((result) => {
+          if (!controller.signal.aborted) {
+            setFrames(result.frames);
+            setTotalItems(result.totalItems);
+            setTotalPages(Math.max(result.totalPages, 1));
+          }
         })
         .catch((requestError: unknown) => {
           if (!controller.signal.aborted) {
@@ -126,16 +138,18 @@ export default function CafeAdminFrames() {
       window.clearTimeout(timeout);
       controller.abort();
     };
-  }, [selectedCafeId]);
+  }, [selectedCafeId, page]);
 
   function closeForm() {
     setEditing(null);
     setForm(emptyForm);
+    setFormError("");
     setIsFormOpen(false);
   }
 
   function openCreate() {
     setError("");
+    setFormError("");
     setEditing(null);
     setFormCafeId(selectedCafeId);
     setForm(emptyForm);
@@ -144,6 +158,7 @@ export default function CafeAdminFrames() {
 
   function openEdit(frame: Frame) {
     setError("");
+    setFormError("");
     setEditing(frame);
     setForm({
       title: frame.title,
@@ -157,17 +172,17 @@ export default function CafeAdminFrames() {
   async function saveFrame(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (!editing && !form.file) {
-      setError("File PNG frame wajib dipilih.");
+      setFormError("File PNG frame wajib dipilih.");
       return;
     }
     const targetCafeId = editing ? selectedCafeId : formCafeId;
     if (!targetCafeId) {
-      setError("Pilih kafe untuk frame ini.");
+      setFormError("Pilih kafe untuk frame ini.");
       return;
     }
 
     setSaving(true);
-    setError("");
+    setFormError("");
     const payload = new FormData();
     payload.append("title", form.title.trim());
     payload.append("maxPhotosSlot", form.maxPhotosSlot);
@@ -186,12 +201,16 @@ export default function CafeAdminFrames() {
       }
       closeForm();
       if (targetCafeId !== selectedCafeId) {
+        setPage(1);
         setSelectedCafeId(targetCafeId);
       } else {
-        setFrames(await fetchCafeFrames(targetCafeId));
+        const result = await fetchCafeFrames(targetCafeId, page);
+        setFrames(result.frames);
+        setTotalItems(result.totalItems);
+        setTotalPages(Math.max(result.totalPages, 1));
       }
     } catch (requestError: unknown) {
-      setError(getErrorMessage(requestError, "Gagal menyimpan frame."));
+      setFormError(getErrorMessage(requestError, "Gagal menyimpan frame."));
     } finally {
       setSaving(false);
     }
@@ -202,7 +221,10 @@ export default function CafeAdminFrames() {
     setError("");
     try {
       await api.delete(`/booth/frames/${frame.id}`);
-      setFrames(await fetchCafeFrames(selectedCafeId));
+      const result = await fetchCafeFrames(selectedCafeId, page);
+      setFrames(result.frames);
+      setTotalItems(result.totalItems);
+      setTotalPages(Math.max(result.totalPages, 1));
     } catch (requestError: unknown) {
       setError(getErrorMessage(requestError, "Gagal menonaktifkan frame."));
     }
@@ -224,7 +246,10 @@ export default function CafeAdminFrames() {
           <select
             value={selectedCafeId}
             disabled={cafesLoading || cafes.length === 0 || isFormOpen}
-            onChange={(event) => setSelectedCafeId(event.target.value)}
+            onChange={(event) => {
+              setSelectedCafeId(event.target.value);
+              setPage(1);
+            }}
             className="h-10 min-w-56 rounded-xl border border-[#E9E1E6] bg-white px-3 text-sm text-[#241435] outline-none focus:border-[#FF6B35] disabled:opacity-60"
           >
             {cafes.map((cafe) => (
@@ -280,6 +305,7 @@ export default function CafeAdminFrames() {
               Memuat frame…
             </p>
           ) : (
+            <>
             <div className="grid gap-4 p-5 sm:grid-cols-2 lg:grid-cols-3">
               {frames.map((frame) => (
                 <article
@@ -347,6 +373,45 @@ export default function CafeAdminFrames() {
                 </p>
               )}
             </div>
+            <div className="flex flex-col items-center justify-between gap-3 border-t border-[#E9E1E6] bg-[#FFF7F2] p-5 sm:flex-row sm:px-6">
+              <p className="text-xs text-[#594139]">
+                Menampilkan {frames.length} dari {totalItems} frame
+              </p>
+              <div className="flex items-center gap-1.5">
+                <button
+                  type="button"
+                  disabled={page <= 1 || framesLoading}
+                  onClick={() => setPage((current) => Math.max(1, current - 1))}
+                  className="flex size-8 items-center justify-center rounded-xl border border-[#E9E1E6] bg-white text-[#241435] hover:bg-[#FFF7F2] disabled:opacity-40"
+                >
+                  <span className="material-symbols-outlined text-base">chevron_left</span>
+                </button>
+                {Array.from({ length: Math.max(1, Math.min(totalPages, 5)) }, (_, index) => index + 1).map((pageNumber) => (
+                  <button
+                    key={pageNumber}
+                    type="button"
+                    disabled={framesLoading}
+                    onClick={() => setPage(pageNumber)}
+                    className={`flex size-8 items-center justify-center rounded-xl text-xs font-semibold transition-all ${
+                      page === pageNumber
+                        ? "bg-[#FF6B35] text-white"
+                        : "border border-[#E9E1E6] bg-white text-[#241435] hover:bg-[#FFF7F2]"
+                    }`}
+                  >
+                    {pageNumber}
+                  </button>
+                ))}
+                <button
+                  type="button"
+                  disabled={page >= totalPages || framesLoading}
+                  onClick={() => setPage((current) => Math.min(totalPages, current + 1))}
+                  className="flex size-8 items-center justify-center rounded-xl border border-[#E9E1E6] bg-white text-[#241435] hover:bg-[#FFF7F2] disabled:opacity-40"
+                >
+                  <span className="material-symbols-outlined text-base">chevron_right</span>
+                </button>
+              </div>
+            </div>
+            </>
           )}
         </section>
       )}
@@ -368,6 +433,14 @@ export default function CafeAdminFrames() {
             >
               {editing ? `Ubah ${editing.title}` : "Frame Baru"}
             </h2>
+            {formError && (
+              <p
+                role="alert"
+                className="rounded-xl border border-[#D32F2F]/20 bg-[#ffdad6] px-4 py-3 text-sm text-[#ba1a1a]"
+              >
+                {formError}
+              </p>
+            )}
             {!editing && (
               <label className="text-sm font-medium">
                 Lokasi Kafe
