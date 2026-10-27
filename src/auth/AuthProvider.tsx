@@ -12,6 +12,11 @@ type AuthContextValue = {
 
 const AuthContext = createContext<AuthContextValue | null>(null);
 
+async function fetchSession() {
+  const response = await api.get<{ data: { user: AuthUser } }>("/auth/me");
+  return response.data.data.user;
+}
+
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<AuthUser | null>(null);
   const [loading, setLoading] = useState(true);
@@ -19,8 +24,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const refreshSession = useCallback(async () => {
     setLoading(true);
     try {
-      const response = await api.get<{ data: { user: AuthUser } }>("/auth/me");
-      setUser(response.data.data.user);
+      setUser(await fetchSession());
     } catch {
       setUser(null);
     } finally {
@@ -29,13 +33,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   useEffect(() => {
-    void refreshSession();
-  }, [refreshSession]);
+    void fetchSession()
+      .then(setUser)
+      .catch(() => setUser(null))
+      .finally(() => setLoading(false));
+  }, []);
 
   async function logout() {
     try {
       await api.post("/auth/logout");
     } catch {
+      // Clear the local session even if the logout request fails.
     } finally {
       setUser(null);
     }
@@ -44,6 +52,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   return <AuthContext.Provider value={{ user, loading, refreshSession, logout }}>{children}</AuthContext.Provider>;
 }
 
+// eslint-disable-next-line react-refresh/only-export-components
 export function useAuth() {
   const auth = useContext(AuthContext);
   if (!auth) throw new Error("useAuth must be used within AuthProvider");
