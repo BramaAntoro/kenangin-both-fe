@@ -1,4 +1,7 @@
-import type { CafeRevenue } from "./types";
+import { useEffect, useState } from "react";
+import api from "../../lib/client/axios";
+import type { ApiEnvelope } from "../types";
+import type { CafeRevenue, CafeRevenueTransaction } from "./types";
 
 interface CafeAdminRevenueProps {
   revenue: CafeRevenue;
@@ -20,6 +23,48 @@ const dateTime = (date: string | null) =>
     : "—";
 
 export default function CafeAdminRevenue({ revenue }: CafeAdminRevenueProps) {
+  const [transactions, setTransactions] = useState<CafeRevenueTransaction[]>([]);
+  const [page, setPage] = useState(1);
+  const [meta, setMeta] = useState({ currentPage: 1, totalPages: 0, totalItems: 0 });
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+  const limit = 10;
+
+  useEffect(() => {
+    const controller = new AbortController();
+    const timeout = window.setTimeout(() => {
+      setLoading(true);
+      setError("");
+      api
+        .get<ApiEnvelope<{ transactions: CafeRevenueTransaction[] }>>(
+          "/reports/revenue-recap/mine/transactions",
+          { params: { page, limit }, signal: controller.signal },
+        )
+        .then((response) => {
+          setTransactions(response.data.data.transactions);
+          setMeta({
+            currentPage: response.data.meta?.currentPage ?? page,
+            totalPages: response.data.meta?.totalPages ?? 0,
+            totalItems: response.data.meta?.totalItems ?? 0,
+          });
+        })
+        .catch(() => {
+          if (!controller.signal.aborted) {
+            setError("Gagal memuat riwayat transaksi.");
+          }
+        })
+        .finally(() => {
+          if (!controller.signal.aborted) setLoading(false);
+        });
+    }, 0);
+    return () => {
+      window.clearTimeout(timeout);
+      controller.abort();
+    };
+  }, [page]);
+
+  const totalPages = Math.max(meta.totalPages, 1);
+
   return (
     <div className="flex w-full flex-col gap-5">
       <section>
@@ -30,7 +75,7 @@ export default function CafeAdminRevenue({ revenue }: CafeAdminRevenueProps) {
           </h2>
         </div>
         <p className="mt-1 text-sm text-[#594139]">
-          100 transaksi terbaru yang sudah dibayar dari kafe Anda.
+          Riwayat transaksi yang sudah dibayar dari kafe Anda.
         </p>
       </section>
       <section className="overflow-hidden rounded-3xl border border-[#E9E1E6] bg-white shadow-sm">
@@ -40,6 +85,7 @@ export default function CafeAdminRevenue({ revenue }: CafeAdminRevenueProps) {
             {money(revenue.summary.totalCafeShareRevenue)}
           </span>
         </div>
+        {error && <p role="alert" className="p-5 text-sm text-[#ba1a1a]">{error}</p>}
         <div className="overflow-x-auto">
           <table className="w-full min-w-[760px] text-left text-sm">
             <thead className="bg-[#FFF7F2] text-xs uppercase tracking-wide text-[#594139]">
@@ -59,7 +105,7 @@ export default function CafeAdminRevenue({ revenue }: CafeAdminRevenueProps) {
               </tr>
             </thead>
             <tbody className="divide-y divide-[#E9E1E6]">
-              {revenue.transactions.map((transaction) => (
+              {transactions.map((transaction) => (
                 <tr key={transaction.id} className="hover:bg-[#FFF7F2]">
                   <td className="px-5 py-4 text-[#594139]">
                     {dateTime(transaction.paidAt)}
@@ -80,10 +126,31 @@ export default function CafeAdminRevenue({ revenue }: CafeAdminRevenueProps) {
             </tbody>
           </table>
         </div>
-        {revenue.transactions.length === 0 && (
+        {!loading && transactions.length === 0 && (
           <p className="p-8 text-center text-sm text-[#594139]">
             Belum ada transaksi yang sudah dibayar.
           </p>
+        )}
+        {loading && <p className="p-8 text-center text-sm text-[#594139]">Memuat transaksi…</p>}
+        {!loading && (
+          <div className="flex flex-col items-center justify-between gap-3 border-t border-[#E9E1E6] bg-[#FFF7F2] p-5 sm:flex-row sm:px-6">
+            <p className="text-xs text-[#594139]">
+              Menampilkan {transactions.length} dari {meta.totalItems} transaksi
+            </p>
+            <div className="flex items-center gap-1.5">
+              <button type="button" disabled={page <= 1} onClick={() => setPage((current) => Math.max(1, current - 1))} className="flex size-8 items-center justify-center rounded-xl border border-[#E9E1E6] bg-white text-[#241435] hover:bg-[#FFF7F2] disabled:opacity-40">
+                <span className="material-symbols-outlined text-base">chevron_left</span>
+              </button>
+              {Array.from({ length: Math.max(1, Math.min(totalPages, 5)) }, (_, index) => index + 1).map((pageNumber) => (
+                <button key={pageNumber} type="button" onClick={() => setPage(pageNumber)} className={`flex size-8 items-center justify-center rounded-xl text-xs font-semibold transition-all ${page === pageNumber ? "bg-[#FF6B35] text-white" : "border border-[#E9E1E6] bg-white text-[#241435] hover:bg-[#FFF7F2]"}`}>
+                  {pageNumber}
+                </button>
+              ))}
+              <button type="button" disabled={page >= totalPages} onClick={() => setPage((current) => Math.min(totalPages, current + 1))} className="flex size-8 items-center justify-center rounded-xl border border-[#E9E1E6] bg-white text-[#241435] hover:bg-[#FFF7F2] disabled:opacity-40">
+                <span className="material-symbols-outlined text-base">chevron_right</span>
+              </button>
+            </div>
+          </div>
         )}
       </section>
     </div>
