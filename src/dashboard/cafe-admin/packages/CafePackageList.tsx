@@ -63,35 +63,50 @@ export default function CafePackageList({
         )}
       </div>
 
-      {totalPages > 1 && (
-        <div className="flex items-center justify-between border-t border-[#E9E1E6] px-5 py-4">
-          <p className="text-sm text-[#594139]">
-            Halaman {page} dari {totalPages}
+      <div className="flex flex-col items-center justify-between gap-3 border-t border-[#E9E1E6] bg-[#FFF7F2] px-5 py-4 sm:flex-row">
+          <p className="text-xs text-[#594139]">
+            Menampilkan {packages.length} dari {totalItems} paket
           </p>
-          <div className="flex gap-2">
+          <div className="flex items-center gap-1.5">
             <button
               type="button"
               disabled={page <= 1 || loading}
               onClick={() =>
                 onPageChange((current) => Math.max(1, current - 1))
               }
-              className="rounded-lg border border-[#E9E1E6] px-3 py-1.5 text-sm font-medium disabled:opacity-50"
+              className="flex size-8 items-center justify-center rounded-xl border border-[#E9E1E6] bg-white text-[#241435] hover:bg-[#FFF7F2] disabled:opacity-40"
             >
-              Sebelumnya
+              <span className="material-symbols-outlined text-base">chevron_left</span>
             </button>
+            {Array.from({ length: Math.max(1, Math.min(totalPages, 5)) }, (_, index) => index + 1).map(
+              (pageNumber) => (
+                <button
+                  key={pageNumber}
+                  type="button"
+                  disabled={loading}
+                  onClick={() => onPageChange(pageNumber)}
+                  className={`flex size-8 items-center justify-center rounded-xl text-xs font-semibold transition-all ${
+                    page === pageNumber
+                      ? "bg-[#FF6B35] text-white"
+                      : "border border-[#E9E1E6] bg-white text-[#241435] hover:bg-[#FFF7F2]"
+                  }`}
+                >
+                  {pageNumber}
+                </button>
+              ),
+            )}
             <button
               type="button"
               disabled={page >= totalPages || loading}
               onClick={() =>
                 onPageChange((current) => Math.min(totalPages, current + 1))
               }
-              className="rounded-lg border border-[#E9E1E6] px-3 py-1.5 text-sm font-medium disabled:opacity-50"
+              className="flex size-8 items-center justify-center rounded-xl border border-[#E9E1E6] bg-white text-[#241435] hover:bg-[#FFF7F2] disabled:opacity-40"
             >
-              Berikutnya
+              <span className="material-symbols-outlined text-base">chevron_right</span>
             </button>
           </div>
         </div>
-      )}
     </section>
   );
 }
