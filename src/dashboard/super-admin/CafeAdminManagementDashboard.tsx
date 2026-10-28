@@ -7,6 +7,8 @@ type CafeAdmin = {
   id: string;
   name: string;
   email: string;
+  accountNumber: string | null;
+  bankName: string | null;
 };
 
 type Cafe = { id: string; name: string; slug: string };
@@ -14,6 +16,8 @@ type Cafe = { id: string; name: string; slug: string };
 type CafeAdminForm = {
   name: string;
   email: string;
+  accountNumber: string;
+  bankName: string;
   password: string;
 };
 
@@ -22,7 +26,13 @@ type ApiErrorResponse = {
   error?: unknown;
 };
 
-const emptyForm: CafeAdminForm = { name: "", email: "", password: "" };
+const emptyForm: CafeAdminForm = {
+  name: "",
+  email: "",
+  accountNumber: "",
+  bankName: "",
+  password: "",
+};
 
 function formErrorMessages(data?: ApiErrorResponse): string[] {
   const details = data?.error;
@@ -124,7 +134,13 @@ export default function CafeAdminManagementDashboard() {
 
   function openEdit(cafeAdmin: CafeAdmin) {
     setEditing(cafeAdmin);
-    setForm({ name: cafeAdmin.name, email: cafeAdmin.email, password: "" });
+    setForm({
+      name: cafeAdmin.name,
+      email: cafeAdmin.email,
+      accountNumber: cafeAdmin.accountNumber ?? "",
+      bankName: cafeAdmin.bankName ?? "",
+      password: "",
+    });
     setFormErrors([]);
     setIsFormOpen(true);
   }
@@ -144,6 +160,8 @@ export default function CafeAdminManagementDashboard() {
     const payload = {
       name: form.name,
       email: form.email,
+      accountNumber: form.accountNumber,
+      bankName: form.bankName,
       ...(form.password ? { password: form.password } : {}),
     };
 
@@ -278,6 +296,8 @@ export default function CafeAdminManagementDashboard() {
                 <tr>
                   <th className="px-6 py-4">Nama</th>
                   <th className="px-4 py-4">Email</th>
+                  <th className="px-4 py-4">Nama Bank</th>
+                  <th className="px-4 py-4">Nomor Rekening</th>
                   <th className="px-6 py-4 text-right">Aksi</th>
                 </tr>
               </thead>
@@ -289,6 +309,12 @@ export default function CafeAdminManagementDashboard() {
                     </td>
                     <td className="px-4 py-4 text-[#594139]">
                       {cafeAdmin.email}
+                    </td>
+                    <td className="px-4 py-4 text-[#594139]">
+                      {cafeAdmin.bankName || "—"}
+                    </td>
+                    <td className="px-4 py-4 text-[#594139]">
+                      {cafeAdmin.accountNumber || "—"}
                     </td>
                     <td className="px-6 py-4 text-right">
                       <button
@@ -318,7 +344,7 @@ export default function CafeAdminManagementDashboard() {
                 {cafeAdmins.length === 0 && (
                   <tr>
                     <td
-                      colSpan={3}
+                      colSpan={5}
                       className="px-6 py-10 text-center text-[#594139]"
                     >
                       Belum ada admin kafe.
@@ -394,6 +420,10 @@ export default function CafeAdminManagementDashboard() {
                 </h3>
                 <p className="mt-1 text-sm text-[#594139]">
                   {detailAdmin.email}
+                </p>
+                <p className="mt-2 text-sm text-[#594139]">
+                  {detailAdmin.bankName || "Bank belum diisi"} ·{" "}
+                  {detailAdmin.accountNumber || "Nomor rekening belum diisi"}
                 </p>
               </div>
               <button
@@ -479,6 +509,28 @@ export default function CafeAdminManagementDashboard() {
                 value={form.email}
                 onChange={(event) =>
                   setForm({ ...form, email: event.target.value })
+                }
+                className="mt-1.5 w-full rounded-xl border border-[#E9E1E6] bg-white px-3 py-2 text-sm outline-none focus:border-[#FF6B35]"
+              />
+            </label>
+            <label className="text-sm font-medium">
+              Nama Bank
+              <input
+                maxLength={100}
+                value={form.bankName}
+                onChange={(event) =>
+                  setForm({ ...form, bankName: event.target.value })
+                }
+                className="mt-1.5 w-full rounded-xl border border-[#E9E1E6] bg-white px-3 py-2 text-sm outline-none focus:border-[#FF6B35]"
+              />
+            </label>
+            <label className="text-sm font-medium">
+              Nomor Rekening
+              <input
+                maxLength={50}
+                value={form.accountNumber}
+                onChange={(event) =>
+                  setForm({ ...form, accountNumber: event.target.value })
                 }
                 className="mt-1.5 w-full rounded-xl border border-[#E9E1E6] bg-white px-3 py-2 text-sm outline-none focus:border-[#FF6B35]"
               />
